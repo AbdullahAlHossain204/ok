@@ -1,0 +1,22 @@
+<%- include('partials/header') %>
+<h1><%= h %></h1>
+<form method="get" class="card filters" role="search">
+<div><label for="q">Search</label><input id="q" name="q" value="<%= f.q %>" placeholder="Search…"></div>
+<% if (kind === 'transactions') { %><div><label for="type">Type</label><select id="type" name="type"><option value="">All</option><option value="CREDIT" <%= f.type==='CREDIT'?'selected':'' %>>Credit</option><option value="DEBIT" <%= f.type==='DEBIT'?'selected':'' %>>Debit</option></select></div><% } %>
+<div><label for="from">From</label><input id="from" name="from" type="date" value="<%= f.from %>"></div>
+<div><label for="to">To</label><input id="to" name="to" type="date" value="<%= f.to %>"></div>
+<div><label for="category">Category</label><select id="category" name="category"><option value="">All</option><% categories.forEach(c => { %><option value="<%= c.id %>" <%= Number(f.category)===c.id?'selected':'' %>><%= c.name %></option><% }) %></select></div>
+<div class="factions"><button class="btn small" type="submit">Filter</button> <a href="/<%= kind %>">Clear</a></div></form>
+<% if (!rows.length) { %><p class="empty"><%= empty %></p><% } else { %>
+<div class="tablewrap"><table class="resp"><thead><tr><th>Date</th>
+<% if (kind === 'donations') { %><th>Donor</th><th>Amount</th><th>Purpose</th><th>Category</th><th>Transaction ID</th>
+<% } else if (kind === 'expenses') { %><th>Category</th><th>Description</th><th>Amount</th><th>Transaction ID</th>
+<% } else { %><th>Type</th><th>Description / Donor</th><th>Amount</th><th>Transaction ID</th><% } %></tr></thead><tbody>
+<% rows.forEach(r => { %><tr><td data-label="Date"><%= fmtDate(r.date) %></td>
+<% if (kind === 'donations') { %><td data-label="Donor"><%= r.displayName %></td><td data-label="Amount"><strong><%= taka(r.amount) %></strong></td><td data-label="Purpose"><%= r.description || '—' %></td><td data-label="Category"><%= r.category %></td>
+<% } else if (kind === 'expenses') { %><td data-label="Category"><%= r.category %></td><td data-label="Description"><%= r.description || '—' %></td><td data-label="Amount"><strong><%= taka(r.amount) %></strong></td>
+<% } else { %><td data-label="Type"><span class="badge <%= r.type === 'CREDIT' ? 'cr' : 'db' %>"><%= r.type === 'CREDIT' ? '▲ Credit' : '▼ Debit' %></span></td><td data-label="Details"><%= r.type === 'CREDIT' ? r.displayName : (r.description || r.category) %></td><td data-label="Amount"><strong><%= taka(r.amount) %></strong></td>
+<% } %><td data-label="Transaction ID"><%= r.transactionId %></td></tr><% }) %></tbody></table></div>
+<p class="muted"><%= total %> record(s) &middot; Page <%= pageNo %> of <%= pages %></p>
+<nav class="pager" aria-label="Pages"><% if (pageNo > 1) { %><a href="<%= qs({ page: pageNo - 1 }) %>">← Previous</a><% } %><% if (pageNo < pages) { %><a href="<%= qs({ page: pageNo + 1 }) %>">Next →</a><% } %></nav>
+<% } %><%- include('partials/footer') %>

@@ -1,0 +1,20 @@
+<%- include('../partials/admin_header') %>
+<h1>Dashboard</h1>
+<p class="quick"><a class="btn small" href="/admin/donations/new">+ Add Donation</a> <a class="btn small" href="/admin/expenses/new">+ Add Expense</a> <a class="btn small alt" href="/admin/transactions">View Transactions</a> <a class="btn small alt" href="/admin/reports">View Reports</a></p>
+<section class="cards">
+<div class="card"><span>Total Credit</span><strong><%= taka(t.credit) %></strong></div>
+<div class="card"><span>Total Debit</span><strong><%= taka(t.debit) %></strong></div>
+<div class="card gold"><span>Current Balance</span><strong><%= taka(t.balance) %></strong></div>
+<div class="card"><span>Total Donations</span><strong><%= t.donations %></strong></div></section>
+<section class="cards">
+<div class="card"><span>Income in <%= monthLabel %></span><strong><%= taka(month.credit) %></strong></div>
+<div class="card"><span>Expense in <%= monthLabel %></span><strong><%= taka(month.debit) %></strong></div></section>
+<h2>Income vs Expense, <%= year %></h2>
+<div class="card"><p class="legend"><span class="sw g"></span> Income <span class="sw o"></span> Expense</p><%- chart %></div>
+<% const list = (rows, base, none) => rows.length ? '' : none; %>
+<div class="two">
+<section><h2>Recent Donations</h2><% if (!donations.length) { %><p class="empty">No donations found.</p><% } else { %><ul class="recent"><% donations.forEach(r => { %><li><span><a href="/admin/donations/<%= r.id %>"><%= r.donor_name %></a><small><%= fmtDate(r.date) %> · <%= r.txn_id %></small></span><strong><%= taka(r.amount) %></strong></li><% }) %></ul><% } %></section>
+<section><h2>Recent Expenses</h2><% if (!expenses.length) { %><p class="empty">No expenses found.</p><% } else { %><ul class="recent"><% expenses.forEach(r => { %><li><span><a href="/admin/expenses/<%= r.id %>"><%= r.text %></a><small><%= fmtDate(r.date) %> · <%= r.txn_id %></small></span><strong><%= taka(r.amount) %></strong></li><% }) %></ul><% } %></section></div>
+<h2>Recent Transactions</h2>
+<% if (!transactions.length) { %><p class="empty">No transactions found.</p><% } else { %><ul class="recent"><% transactions.forEach(r => { %><li><span><span class="badge <%= r.type === 'CREDIT' ? 'cr' : 'db' %>"><%= r.type === 'CREDIT' ? '▲ Credit' : '▼ Debit' %></span> <%= r.type === 'CREDIT' ? r.donor_name : r.text %><small><%= fmtDate(r.date) %> · <%= r.txn_id %></small></span><strong><%= taka(r.amount) %></strong></li><% }) %></ul><% } %>
+<%- include('../partials/footer') %>

@@ -1,0 +1,9 @@
+<%- include('../partials/admin_header') %>
+<h1>Donors</h1>
+<form method="get" class="search"><label class="sr" for="q">Search</label><input id="q" name="q" value="<%= q %>" placeholder="Search name, phone or transaction ID"><button class="btn small" type="submit">Search</button></form>
+<% if (!rows.length) { %><p class="empty">No donors found.</p><% } else { %>
+<div class="tablewrap"><table class="resp"><thead><tr><th>Donor</th><th>Phone</th><th>Total donated</th><th>Donations</th><th>Last donation</th><th></th></tr></thead><tbody>
+<% rows.forEach(r => { %><tr><td data-label="Donor"><%= r.name %></td><td data-label="Phone"><%= r.phone %></td><td data-label="Total"><strong><%= taka(r.total) %></strong></td><td data-label="Donations"><%= r.cnt %></td><td data-label="Last"><%= r.last ? fmtDate(r.last) : '—' %></td><td data-label=""><a href="/admin/donors/<%= r.id %>">Profile</a></td></tr><% }) %></tbody></table></div>
+<p class="muted"><%= total %> donor(s) &middot; Page <%= pageNo %> of <%= pages %></p>
+<div class="pager"><% if (pageNo > 1) { %><a href="?q=<%= encodeURIComponent(q) %>&page=<%= pageNo - 1 %>">← Previous</a><% } %><% if (pageNo < pages) { %><a href="?q=<%= encodeURIComponent(q) %>&page=<%= pageNo + 1 %>">Next →</a><% } %></div>
+<% } %><%- include('../partials/footer') %>

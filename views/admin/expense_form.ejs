@@ -1,0 +1,14 @@
+<%- include('../partials/admin_header') %>
+<h1><%= title %></h1>
+<% if (errors.length) { %><div class="alert" role="alert"><strong>Please fix:</strong><ul><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul></div><% } %>
+<form method="post" action="<%= action %><input type="hidden" name="_csrf" value="<%= csrfToken %>">" class="card form">
+<label for="amount">Amount (৳)</label><input id="amount" name="amount" value="<%= v.amount_raw %>" required inputmode="decimal" placeholder="3500">
+<label for="date">Date</label><input id="date" name="date" type="date" value="<%= v.date %>" required>
+<label for="category_id">Category</label><select id="category_id" name="category_id" required><option value="">Choose…</option><% cats.forEach(c => { %><option value="<%= c.id %>" <%= Number(v.category_id) === c.id ? 'selected' : '' %>><%= c.name %></option><% }) %></select>
+<label for="reason">Reason</label><input id="reason" name="reason" value="<%= v.purpose %>" required maxlength="200" placeholder="e.g. September electricity bill">
+<label for="description">Description (shown publicly, optional)</label><textarea id="description" name="description" rows="2" maxlength="500"><%= v.description %></textarea>
+<label for="payment_method">Payment method</label><select id="payment_method" name="payment_method"><% methods.forEach(m => { %><option <%= v.payment_method === m ? 'selected' : '' %>><%= m %></option><% }) %></select>
+<label for="status">Status</label><select id="status" name="status"><% ['COMPLETED','PENDING','CANCELLED'].forEach(s => { %><option <%= v.status === s ? 'selected' : '' %>><%= s %></option><% }) %></select>
+<label for="note">Note (admin only)</label><textarea id="note" name="note" rows="3" maxlength="500"><%= v.note %></textarea>
+<button class="btn" type="submit">Save Expense</button></form>
+<p><a href="/admin/expenses">← Back to expenses</a></p><%- include('../partials/footer') %>

@@ -1,0 +1,9 @@
+<%- include('../partials/admin_header') %>
+<div class="head"><h1>Expenses</h1><a class="btn small" href="/admin/expenses/new">+ Add Expense</a></div>
+<form method="get" class="search"><label class="sr" for="q">Search</label><input id="q" name="q" value="<%= q %>" placeholder="Search reason, description or transaction ID"><button class="btn small" type="submit">Search</button></form>
+<% if (!rows.length) { %><p class="empty">No expenses found.</p><% } else { %>
+<div class="tablewrap"><table><thead><tr><th>ID</th><th>Date</th><th>Category</th><th>Reason</th><th>Amount</th><th>Payment</th><th>Status</th><th></th></tr></thead><tbody>
+<% rows.forEach(r => { %><tr><td><%= r.txn_id %></td><td><%= fmtDate(r.date) %></td><td><%= r.category %></td><td><%= r.purpose %></td><td><%= taka(r.amount) %></td><td><%= r.payment_method %></td><td><%= r.status %></td><td><a href="/admin/expenses/<%= r.id %>">View</a></td></tr><% }) %></tbody></table></div>
+<p class="muted"><%= total %> expense(s) &middot; Page <%= pageNo %> of <%= pages %></p>
+<div class="pager"><% if (pageNo > 1) { %><a href="?q=<%= encodeURIComponent(q) %>&page=<%= pageNo - 1 %>">← Previous</a><% } %><% if (pageNo < pages) { %><a href="?q=<%= encodeURIComponent(q) %>&page=<%= pageNo + 1 %>">Next →</a><% } %></div>
+<% } %><%- include('../partials/footer') %>

@@ -1,0 +1,10 @@
+<%- include('partials/header') %>
+<h1>Funds &amp; Projects</h1><p class="muted">Live progress toward each target.</p>
+<% if (!funds.length) { %><p class="empty">No funds found.</p><% } else { %>
+<div class="funds"><% funds.forEach(f => { %><article class="card fund"><h2><%= f.name %> <% if (f.status === 'COMPLETED') { %><span class="badge cr">Completed</span><% } %></h2>
+<% if (f.description) { %><p><%= f.description %></p><% } %>
+<% if (f.progressPercent !== null) { %><div class="meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= Math.min(100, f.progressPercent) %>" aria-label="<%= f.name %> progress"><span style="width:<%= Math.min(100, f.progressPercent) %>%"></span></div>
+<dl class="stats"><div><dt>Target</dt><dd><%= taka(f.target) %></dd></div><div><dt>Collected</dt><dd><%= taka(f.collected) %></dd></div><div><dt>Remaining</dt><dd><%= taka(f.remaining) %></dd></div><div><dt>Progress</dt><dd><%= f.progressPercent.toFixed(1) %>%</dd></div></dl>
+<% } else { %><dl class="stats"><div><dt>Collected</dt><dd><%= taka(f.collected) %></dd></div><div><dt>Target</dt><dd>No target set</dd></div></dl><% } %>
+<% if (f.startDate || f.endDate) { %><p class="muted"><%= f.startDate ? fmtDate(f.startDate) : '' %> – <%= f.endDate ? fmtDate(f.endDate) : 'ongoing' %></p><% } %></article><% }) %></div>
+<% } %><%- include('partials/footer') %>

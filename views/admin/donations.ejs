@@ -1,0 +1,10 @@
+<%- include('../partials/admin_header') %>
+<div class="head"><h1>Donations</h1><a class="btn small" href="/admin/donations/new">+ Add Donation</a></div>
+<form method="get" class="search"><label class="sr" for="q">Search</label><input id="q" name="q" value="<%= q %>" placeholder="Search name, phone or transaction ID"><button class="btn small" type="submit">Search</button></form>
+<% if (!rows.length) { %><p class="empty">No donations found.</p><% } else { %>
+<div class="tablewrap"><table><thead><tr><th>ID</th><th>Date</th><th>Donor</th><th>Phone</th><th>Amount</th><th>Category</th><th>Shown publicly as</th><th>Status</th><th></th></tr></thead><tbody>
+<% rows.forEach(r => { %><tr><td><%= r.txn_id %></td><td><%= fmtDate(r.date) %></td><td><%= r.donor_name %></td><td><%= r.phone %></td><td><%= taka(r.amount) %></td><td><%= r.category %></td>
+<td><%= r.name_visibility === 'PUBLIC' ? 'Name' : 'Anonymous Donor' %></td><td><%= r.status %></td><td><a href="/admin/donations/<%= r.id %>">View</a></td></tr><% }) %></tbody></table></div>
+<p class="muted"><%= total %> donation(s) &middot; Page <%= pageNo %> of <%= pages %></p>
+<div class="pager"><% if (pageNo > 1) { %><a href="?q=<%= encodeURIComponent(q) %>&page=<%= pageNo - 1 %>">← Previous</a><% } %><% if (pageNo < pages) { %><a href="?q=<%= encodeURIComponent(q) %>&page=<%= pageNo + 1 %>">Next →</a><% } %></div>
+<% } %><%- include('../partials/footer') %>

@@ -1,0 +1,8 @@
+<%- include('../partials/admin_header') %>
+<h1>Expense <%= t.txn_id %></h1>
+<div class="card"><dl class="dl">
+<dt>Amount</dt><dd><strong><%= taka(t.amount) %></strong></dd><dt>Date</dt><dd><%= fmtDate(t.date) %></dd><dt>Category</dt><dd><%= t.category %></dd>
+<dt>Reason</dt><dd><%= t.purpose %></dd><dt>Description</dt><dd><%= t.description || '—' %></dd><dt>Payment method</dt><dd><%= t.payment_method %></dd>
+<dt>Status</dt><dd><%= t.status %></dd><dt>Note</dt><dd><%= t.note || '—' %></dd></dl></div>
+<p class="actions"><a class="btn small" href="/admin/expenses/<%= t.id %>/edit">Edit</a> <a class="btn small danger" href="/admin/expenses/<%= t.id %>/delete">Delete</a> <a href="/admin/expenses">← All expenses</a></p>
+<%- include('../partials/footer') %>

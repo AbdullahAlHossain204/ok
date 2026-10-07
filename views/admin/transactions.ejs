@@ -1,0 +1,26 @@
+<%- include('../partials/admin_header') %>
+<div class="head"><h1>Transactions</h1><span><a class="btn small" href="/admin/donations/new">+ Donation</a> <a class="btn small" href="/admin/expenses/new">+ Expense</a></span></div>
+<form method="get" class="card filters">
+<div><label for="q">Search</label><input id="q" name="q" value="<%= f.q %>" placeholder="Name, phone, ID, description"></div>
+<div><label for="type">Type</label><select id="type" name="type"><option value="">All</option><option value="CREDIT" <%= f.type==='CREDIT'?'selected':'' %>>Credit</option><option value="DEBIT" <%= f.type==='DEBIT'?'selected':'' %>>Debit</option></select></div>
+<div><label for="range">Period</label><select id="range" name="range"><option value="">All time</option><% [['today','Today'],['week','This week (Sat–Fri)'],['month','This month'],['custom','Custom range']].forEach(r => { %><option value="<%= r[0] %>" <%= f.range===r[0]?'selected':'' %>><%= r[1] %></option><% }) %></select></div>
+<div><label for="from">From (custom)</label><input id="from" name="from" type="date" value="<%= f.from %>"></div>
+<div><label for="to">To (custom)</label><input id="to" name="to" type="date" value="<%= f.to %>"></div>
+<div><label for="category">Category</label><select id="category" name="category"><option value="">All</option><% categories.forEach(c => { %><option value="<%= c.id %>" <%= Number(f.category)===c.id?'selected':'' %>><%= c.label %></option><% }) %></select></div>
+<div><label for="method">Payment method</label><select id="method" name="method"><option value="">All</option><% methods.forEach(m => { %><option <%= f.method===m?'selected':'' %>><%= m %></option><% }) %></select></div>
+<div><label for="status">Status</label><select id="status" name="status"><option value="">All</option><% ['COMPLETED','PENDING','CANCELLED'].forEach(s => { %><option <%= f.status===s?'selected':'' %>><%= s %></option><% }) %></select></div>
+<div><label for="min">Min amount (৳)</label><input id="min" name="min" value="<%= f.min %>" inputmode="decimal"></div>
+<div><label for="max">Max amount (৳)</label><input id="max" name="max" value="<%= f.max %>" inputmode="decimal"></div>
+<div class="factions"><button class="btn small" type="submit">Apply filters</button> <a href="/admin/transactions">Clear</a></div></form>
+<% if (!rows.length) { %><p class="empty">No transactions found.</p><% } else { %>
+<% const sl = (key, label) => `<a href="${qs({ sort: key, dir: f.sort === key && f.dir === 'desc' ? 'asc' : 'desc' })}">${label}${f.sort === key ? (f.dir === 'asc' ? ' ▲' : ' ▼') : ''}</a>`; %>
+<div class="tablewrap"><table class="resp"><thead><tr><th><%- sl('id','ID') %></th><th><%- sl('date','Date') %></th><th><%- sl('type','Type') %></th><th>Donor / Description</th><th><%- sl('amount','Amount') %></th><th>Category</th><th>Payment</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+<% rows.forEach(r => { const base = r.type === 'CREDIT' ? '/admin/donations/' : '/admin/expenses/'; %><tr>
+<td data-label="ID"><%= r.txn_id %></td><td data-label="Date"><%= fmtDate(r.date) %></td>
+<td data-label="Type"><span class="badge <%= r.type === 'CREDIT' ? 'cr' : 'db' %>"><%= r.type === 'CREDIT' ? '▲ Credit' : '▼ Debit' %></span></td>
+<td data-label="Details"><%= r.type === 'CREDIT' ? r.donor_name + ' (' + r.phone + ')' : (r.description || r.purpose) %></td>
+<td data-label="Amount"><strong><%= taka(r.amount) %></strong></td><td data-label="Category"><%= r.category %></td><td data-label="Payment"><%= r.payment_method %></td><td data-label="Status"><%= r.status %></td>
+<td data-label="Actions"><a href="<%= base + r.id %>">View</a> · <a href="<%= base + r.id %>/edit">Edit</a> · <a href="<%= base + r.id %>/delete">Delete</a><% const wa = r.type === 'CREDIT' ? waLink(r) : null; if (wa) { %> · <a href="<%= wa %>" target="_blank" rel="noopener" data-wa>📲 WhatsApp</a><% } %></td></tr><% }) %></tbody></table></div>
+<p class="muted"><%= total %> transaction(s) &middot; Page <%= pageNo %> of <%= pages %></p>
+<div class="pager"><% if (pageNo > 1) { %><a href="<%= qs({ page: pageNo - 1 }) %>">← Previous</a><% } %><% if (pageNo < pages) { %><a href="<%= qs({ page: pageNo + 1 }) %>">Next →</a><% } %></div>
+<% } %><%- include('../partials/footer') %>

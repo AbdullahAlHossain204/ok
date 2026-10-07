@@ -1,0 +1,9 @@
+<%- include('../partials/admin_header') %>
+<h1><%= d.name %></h1><p class="muted">Phone: <%= d.phone %> (private)</p>
+<section class="cards"><div class="card gold"><span>Total contributed</span><strong><%= taka(total) %></strong></div><div class="card"><span>Number of donations</span><strong><%= count %></strong></div></section>
+<h2>Donation history</h2>
+<div class="tablewrap"><table class="resp"><thead><tr><th>ID</th><th>Date</th><th>Amount</th><th>Category</th><th>Purpose</th><th>Shown publicly as</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+<% history.forEach(h => { const wa = waLink(h); %><tr><td data-label="ID"><%= h.txn_id %></td><td data-label="Date"><%= fmtDate(h.date) %></td><td data-label="Amount"><strong><%= taka(h.amount) %></strong></td><td data-label="Category"><%= h.category %></td><td data-label="Purpose"><%= h.purpose || '—' %></td>
+<td data-label="Public"><%= h.name_visibility === 'PUBLIC' ? d.name : 'Anonymous Donor' %></td><td data-label="Status"><%= h.status %></td>
+<td data-label="Actions"><a href="/admin/donations/<%= h.id %>">Details</a><% if (wa) { %> · <a href="<%= wa %>" target="_blank" rel="noopener" data-wa>📲 WhatsApp</a><% } %></td></tr><% }) %></tbody></table></div>
+<p><a href="/admin/donors">← All donors</a></p><%- include('../partials/footer') %>

@@ -1,0 +1,25 @@
+<%- include('../partials/admin_header') %>
+<h1>Reports</h1>
+<form method="get" class="card filters">
+<div><label for="period">Report</label><select id="period" name="period"><% [['daily','Daily'],['weekly','Weekly (Sat–Fri)'],['monthly','Monthly'],['yearly','Yearly'],['custom','Custom range']].forEach(o => { %><option value="<%= o[0] %>" <%= p.period===o[0]?'selected':'' %>><%= o[1] %></option><% }) %></select></div>
+<div data-for="daily weekly"><label for="date">Date</label><input id="date" name="date" type="date" value="<%= p.date %>"></div>
+<div data-for="monthly"><label for="month">Month</label><input id="month" name="month" type="month" value="<%= p.month %>"></div>
+<div data-for="yearly"><label for="year">Year</label><input id="year" name="year" type="number" min="2000" max="2100" value="<%= p.year %>"></div>
+<div data-for="custom"><label for="from">From</label><input id="from" name="from" type="date" value="<%= q.from || '' %>"></div>
+<div data-for="custom"><label for="to">To</label><input id="to" name="to" type="date" value="<%= q.to || '' %>"></div>
+<div class="factions"><button class="btn small" type="submit">Show report</button></div></form>
+<% if (p.error) { %><p class="alert" role="alert"><%= p.error %> Showing the current month instead.</p><% } %>
+<h2><%= p.label %></h2>
+<section class="cards">
+<div class="card"><span>Total Credit</span><strong><%= taka(s.credit) %></strong></div>
+<div class="card"><span>Total Debit</span><strong><%= taka(s.debit) %></strong></div>
+<div class="card gold"><span>Net Change</span><strong><%= s.net < 0 ? '−' + taka(-s.net) : taka(s.net) %></strong></div>
+<div class="card"><span>Donations</span><strong><%= s.donations %></strong></div>
+<div class="card"><span>Expenses</span><strong><%= s.expenses %></strong></div></section>
+<p class="muted">Only COMPLETED transactions are counted. Charts below show the year <%= year %>.</p>
+<h2>Income vs Expense</h2><div class="card"><p class="legend"><span class="sw g"></span> Income <span class="sw o"></span> Expense</p><%- chartBoth %></div>
+<div class="two"><section><h2>Monthly Collection</h2><div class="card"><%- chartIn %></div></section><section><h2>Monthly Expense</h2><div class="card"><%- chartOut %></div></section></div>
+<h2>Monthly figures, <%= year %></h2>
+<div class="tablewrap"><table><thead><tr><th>Month</th><th>Credit</th><th>Debit</th><th>Net</th></tr></thead><tbody>
+<% ['January','February','March','April','May','June','July','August','September','October','November','December'].forEach((n, i) => { const net = m.credit[i] - m.debit[i]; %><tr><td><%= n %></td><td><%= taka(m.credit[i]) %></td><td><%= taka(m.debit[i]) %></td><td><%= net < 0 ? '−' + taka(-net) : taka(net) %></td></tr><% }) %></tbody></table></div>
+<%- include('../partials/footer') %>

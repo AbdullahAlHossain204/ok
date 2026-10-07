@@ -1,0 +1,11 @@
+<%- include('../partials/admin_header') %>
+<div class="head"><h1>Funds / Projects</h1><a class="btn small" href="/admin/funds/new">+ Add Fund</a></div>
+<% if (!rows.length) { %><p class="empty">No funds found.</p><% } else { %>
+<div class="tablewrap"><table class="resp"><thead><tr><th>Name</th><th>Status</th><th>Target</th><th>Collected</th><th>Progress</th><th>Dates</th><th>Actions</th></tr></thead><tbody>
+<% rows.forEach(f => { %><tr><td data-label="Name"><%= f.name %></td><td data-label="Status"><%= f.status %></td>
+<td data-label="Target"><%= f.target ? taka(f.target) : 'No target' %></td><td data-label="Collected"><%= taka(f.collected) %></td>
+<td data-label="Progress"><%= f.pct === null ? '—' : f.pct.toFixed(1) + '%' %></td>
+<td data-label="Dates"><%= f.start_date ? fmtDate(f.start_date) : '—' %> to <%= f.end_date ? fmtDate(f.end_date) : '—' %></td>
+<td data-label="Actions"><a href="/admin/funds/<%= f.id %>/edit">Edit</a> · <a href="/admin/funds/<%= f.id %>/delete">Delete</a></td></tr><% }) %></tbody></table></div>
+<% } %><p class="muted">Only COMPLETED donations count toward a fund. Closed funds are hidden from the public page.</p>
+<%- include('../partials/footer') %>

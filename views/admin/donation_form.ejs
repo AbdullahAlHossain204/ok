@@ -1,0 +1,19 @@
+<%- include('../partials/admin_header') %>
+<h1><%= title %></h1>
+<% if (errors.length) { %><div class="alert" role="alert"><strong>Please fix:</strong><ul><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul></div><% } %>
+<form method="post" action="<%= action %><input type="hidden" name="_csrf" value="<%= csrfToken %>">" class="card form">
+<label for="donor_name">Donor name</label><input id="donor_name" name="donor_name" value="<%= v.donor_name %>" required maxlength="100">
+<label for="phone">Phone number <small>(private, never shown publicly)</small></label><input id="phone" name="phone" value="<%= v.phone_raw %>" required inputmode="tel" placeholder="01712345678">
+<label for="amount">Amount (৳)</label><input id="amount" name="amount" value="<%= v.amount_raw %>" required inputmode="decimal" placeholder="10000">
+<label for="date">Date</label><input id="date" name="date" type="date" value="<%= v.date %>" required>
+<label for="category_id">Category</label><select id="category_id" name="category_id" required><option value="">Choose…</option><% cats.forEach(c => { %><option value="<%= c.id %>" <%= Number(v.category_id) === c.id ? 'selected' : '' %>><%= c.name %></option><% }) %></select>
+<% if (funds.length) { %><label for="fund_id">Fund / Project (optional)</label><select id="fund_id" name="fund_id"><option value="">None</option><% funds.forEach(f => { %><option value="<%= f.id %>" <%= Number(v.fund_id) === f.id ? 'selected' : '' %>><%= f.name %></option><% }) %></select><% } %>
+<label for="purpose">Purpose</label><input id="purpose" name="purpose" value="<%= v.purpose %>" maxlength="200" placeholder="e.g. Building Fund">
+<label for="payment_method">Payment method</label><select id="payment_method" name="payment_method"><% methods.forEach(m => { %><option <%= v.payment_method === m ? 'selected' : '' %>><%= m %></option><% }) %></select>
+<fieldset><legend>Name visibility</legend>
+<label class="radio"><input type="radio" name="name_visibility" value="PUBLIC" <%= v.name_visibility === 'PUBLIC' ? 'checked' : '' %>> Public — donor's name is shown on the website</label>
+<label class="radio"><input type="radio" name="name_visibility" value="PRIVATE" <%= v.name_visibility === 'PRIVATE' ? 'checked' : '' %>> Private — website shows "Anonymous Donor"</label></fieldset>
+<label for="status">Status</label><select id="status" name="status"><% ['COMPLETED','PENDING','CANCELLED'].forEach(s => { %><option <%= v.status === s ? 'selected' : '' %>><%= s %></option><% }) %></select>
+<label for="note">Note (admin only)</label><textarea id="note" name="note" rows="3" maxlength="500"><%= v.note %></textarea>
+<button class="btn" type="submit">Save Donation</button></form>
+<p><a href="/admin/donations">← Back to donations</a></p><%- include('../partials/footer') %>

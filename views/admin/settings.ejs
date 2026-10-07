@@ -1,0 +1,26 @@
+<%- include('../partials/admin_header') %>
+<h1>Settings</h1>
+<% if (errors.length) { %><div class="alert" role="alert"><ul><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul></div><% } %>
+<h2>Website</h2>
+<form method="post" action="/admin/settings" class="card form"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<label for="name">Madrasa name</label><input id="name" name="name" value="<%= s.name %>" required maxlength="100">
+<label for="title">Website title <small>(shown in the browser tab)</small></label><input id="title" name="title" value="<%= s.title %>" required maxlength="100">
+<label for="description">Description (shown on the About page)</label><textarea id="description" name="description" rows="3" maxlength="500"><%= s.description %></textarea>
+<label for="address">Address</label><input id="address" name="address" value="<%= s.address || '' %>" maxlength="300">
+<label for="phone">Contact phone <small>(public — use the Madrasa's number, not a donor's)</small></label><input id="phone" name="phone" value="<%= s.phone || '' %>" maxlength="40">
+<button class="btn" type="submit">Save settings</button></form>
+<h2>Logo</h2>
+<form method="post" action="/admin/settings/logo" class="card form" id="logoform"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<% if (s.logo_v) { %><p><img class="logo big" src="/logo?v=<%= s.logo_v %>" alt="Current logo"></p><% } else { %><p class="muted">No logo yet.</p><% } %>
+<label for="logofile">Choose an image (PNG, JPEG or WebP)</label><input id="logofile" type="file" accept="image/png,image/jpeg,image/webp">
+<input type="hidden" name="logo_data" id="logo_data"><p id="logomsg" class="muted" role="status">The image is resized to fit automatically. Needs JavaScript enabled.</p>
+<p class="actions"><button class="btn small" type="submit" id="logosave" disabled>Upload logo</button><% if (s.logo_v) { %><button class="btn small danger" type="submit" name="remove" value="1">Remove logo</button><% } %></p></form>
+<h2 id="categories">Categories</h2>
+<% if (catError) { %><p class="alert" role="alert"><%= catError %></p><% } %>
+<form method="post" action="/admin/settings/categories" class="card form catadd"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><label for="cname">New category</label><input id="cname" name="name" maxlength="50" required>
+<label for="ctype">Type</label><select id="ctype" name="type"><option value="INCOME">Income (donations)</option><option value="EXPENSE">Expense</option></select><button class="btn small" type="submit">Add category</button></form>
+<div class="two"><% [['Income categories', income], ['Expense categories', expense]].forEach(g => { %><section><h3><%= g[0] %></h3><ul class="recent"><% g[1].forEach(c => { %><li>
+<form method="post" action="/admin/settings/categories/<%= c.id %><input type="hidden" name="_csrf" value="<%= csrfToken %>">" class="inline"><label class="sr" for="c<%= c.id %>">Name</label><input id="c<%= c.id %>" name="name" value="<%= c.name %>" maxlength="50" required><button class="btn small" type="submit">Rename</button></form>
+<span class="muted"><%= c.used %> use(s) · <a href="/admin/settings/categories/<%= c.id %>/delete">Delete</a></span></li><% }) %></ul></section><% }) %></div>
+<p class="muted">Funds and projects are managed under <a href="/admin/funds">Funds</a>.</p>
+<%- include('../partials/footer') %>

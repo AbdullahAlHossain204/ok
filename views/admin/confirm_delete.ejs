@@ -1,0 +1,6 @@
+<%- include('../partials/admin_header') %>
+<h1>Are you sure you want to delete this transaction?</h1>
+<% if (typeof error !== "undefined" && error) { %><p class="alert" role="alert"><%= error %></p><% } %>
+<div class="card"><p><strong><%= label %></strong></p><p class="muted">This cannot be undone. Totals will update.</p>
+<form method="post" action="<%= action %><input type="hidden" name="_csrf" value="<%= csrfToken %>">" class="actions"><a class="btn small" href="<%= back %>">Cancel</a> <button class="btn small danger" type="submit">Delete</button></form></div>
+<%- include('../partials/footer') %>

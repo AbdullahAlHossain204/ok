@@ -1,0 +1,12 @@
+<%- include('../partials/admin_header') %>
+<h1><%= title %></h1>
+<% if (errors.length) { %><div class="alert" role="alert"><strong>Please fix:</strong><ul><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul></div><% } %>
+<form method="post" action="<%= action %><input type="hidden" name="_csrf" value="<%= csrfToken %>">" class="card form">
+<label for="name">Fund name</label><input id="name" name="name" value="<%= v.name %>" required maxlength="100" placeholder="e.g. Building Fund">
+<label for="description">Description (shown publicly)</label><textarea id="description" name="description" rows="3" maxlength="500"><%= v.description %></textarea>
+<label for="target">Target amount (৳) <small>— leave blank if there is no target</small></label><input id="target" name="target" value="<%= v.target_raw %>" inputmode="decimal" placeholder="2000000">
+<label for="start_date">Start date</label><input id="start_date" name="start_date" type="date" value="<%= v.start_date %>">
+<label for="end_date">End date</label><input id="end_date" name="end_date" type="date" value="<%= v.end_date %>">
+<label for="status">Status</label><select id="status" name="status"><% statuses.forEach(s => { %><option <%= v.status === s ? 'selected' : '' %>><%= s %></option><% }) %></select>
+<button class="btn" type="submit">Save Fund</button></form><p><a href="/admin/funds">← Back to funds</a></p>
+<%- include('../partials/footer') %>
