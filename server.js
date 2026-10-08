@@ -98,3 +98,13 @@ if (require.main === module) {
   const port = process.env.PORT || 3000;
   app.listen(port, () => console.log('Running on http://localhost:' + port));
 }
+import { createClient } from "@libsql/client";
+// OR if using CommonJS: const { createClient } = require("@libsql/client");
+
+const db = createClient({
+  url: process.env.TURSO_DATABASE_URL,
+  authToken: process.env.TURSO_AUTH_TOKEN,
+});
+
+// Example query format for the rest of your routes:
+// const result = await db.execute("SELECT * FROM donations");
