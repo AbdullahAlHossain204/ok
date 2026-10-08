@@ -39,7 +39,6 @@ app.use(auth.loadAdmin);
 
 // Public logo image (stored in the database; only PNG/JPEG/WebP are ever accepted)
 app.get('/logo', (req, res) => {
-  const r = db.prepare('SELECT logo, logo_type FROM settings WHERE id=1').get();
   if (!r || !r.logo) return res.status(404).end();
   res.set({ 'Content-Type': r.logo_type, 'Cache-Control': 'public, max-age=86400' }).end(Buffer.from(r.logo));
 });
