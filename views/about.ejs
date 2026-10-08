@@ -1,7 +1,7 @@
 <%- include('partials/header') %>
 <h1>About Us</h1>
-<div class="card"><% if (site.logo_url) { %><img class="about-logo" src="<%= site.logo_url %>" alt="<%= site.name %> logo" width="120" height="120" loading="lazy"><% } %><h2><%= site.name %></h2><% if (site.name_bn) { %><p class="bn" lang="bn"><%= site.name_bn %></p><% } %><p><%= site.description %></p>
+<div class="card"><img class="about-logo" src="<%= site.logo_v ? '/logo?v=' + site.logo_v : '/img/logo.jpg' %>" alt="<%= site.name %> logo" width="150" height="150"><h2><%= site.name %></h2><% if (site.name_bn) { %><p class="bn" lang="bn"><%= site.name_bn %></p><% } %><p><%= site.description %></p>
 <% if (site.address) { %><p><strong>Address:</strong> <%= site.address %></p><% } %>
 <% if (site.phone) { %><p><strong>Contact:</strong> <%= site.phone %></p><% } %>
-<p class="muted">This website shows all donations received. Donors who prefer privacy appear as "Anonymous Donor", and donor phone numbers are never published.</p></div>
+<p class="muted">This website shows every donation received and the total amount spent. Donors who prefer privacy appear as "Anonymous Donor", and donor phone numbers are never published.</p></div>
 <%- include('partials/footer') %>

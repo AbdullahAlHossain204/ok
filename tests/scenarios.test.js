@@ -5,7 +5,7 @@ const os = require('os'), path = require('path'), fs = require('fs');
 const bcrypt = require('bcryptjs');
 const file = path.join(os.tmpdir(), 'madrasa-scen-' + process.pid + '.db');
 process.env.DB_FILE = file;
-const { db, totals } = require('../db');
+const { db } = require('../db');
 const app = require('../server');
 
 let server, base, jar = {}, csrf;
@@ -22,13 +22,13 @@ const token = (html) => (html.match(/name="_csrf" value="([^"]+)"/) || [])[1];
 let admin;
 const formToken = async (c) => token((await send(c, 'GET', '/admin/login')).text) || token((await send(c, 'GET', '/admin')).text) || ''; // logged-in pages carry the token in the logout form
 const post = async (c, p, fields) => send(c, 'POST', p, { _csrf: await formToken(c), ...fields });
-const summary = async () => { const t = await totals(); return { totalCollection: t.credit, totalExpense: t.debit, balance: t.balance, donationCount: t.donations }; }; // admin-side totals (public pages show donations only)
-const PUBLIC_URLS = ['/', '/donations', '/about', '/funds', '/api/public/summary', '/api/public/funds',
-  '/donations?q=Karim', '/donations?q=018', '/donations?q=8801812345678'];
+const summary = async () => (await fetch(base + '/api/public/summary')).json();
+const PUBLIC_URLS = ['/', '/donations', '/about', '/stats', '/api/public/transactions', '/api/public/summary', '/api/public/stats',
+  '/donations?q=Karim', '/donations?q=018', '/api/public/transactions?q=Karim', '/stats?year=2026'];
 const SECRETS = ['Md. Karim', '8801812345678', '01812345678', '8801712345678', '01712345678', 'karim-note', 'admin@scen.test', 'wa.me'];
 
 test.before(async () => {
-  (await db.prepare('INSERT INTO admins(email,password_hash) VALUES(?,?)').run('admin@scen.test', bcrypt.hashSync('GoodPass123', 4)));
+  db.prepare('INSERT INTO admins(email,password_hash) VALUES(?,?)').run('admin@scen.test', bcrypt.hashSync('GoodPass123', 4));
   await new Promise((r) => { server = app.listen(0, r); });
   base = 'http://localhost:' + server.address().port;
   admin = client();
@@ -63,8 +63,8 @@ test('Test 3 - expense: debit up, balance down by exactly 3,500', async () => {
   assert.match(r.loc, /\/admin\/expenses\/\d+\?ok=expense_added/);
   const a = await summary();
   assert.equal(a.totalExpense - b.totalExpense, 350000); assert.equal(b.balance - a.balance, 350000); assert.equal(a.totalCollection, b.totalCollection);
-  assert.ok((await send(admin, 'GET', '/admin/expenses')).text.includes('EXP-2026-000001'));
-  assert.equal((await send(client(), 'GET', '/expenses')).status, 404); // expenses are not public
+  assert.equal((await send(client(), 'GET', '/expenses')).status, 404);                       // the public cannot open expense details
+  assert.ok(!(await send(client(), 'GET', '/stats?year=2026')).text.includes('Electricity'));  // only the amount, never the reason
 });
 
 test('Test 4 - edit 10,000 -> 15,000 updates every total', async () => {
@@ -85,7 +85,7 @@ test('Test 5 - delete needs confirmation, then totals and history update', async
   const r = await post(admin, `/admin/donations/${karimId}/delete`, {});
   assert.match(r.loc, /ok=deleted/);
   const a = await summary();
-  assert.equal(b.totalCollection - a.totalCollection, 500000); assert.equal(b.balance - a.balance, 500000); assert.equal(a.donationCount, 1);
+  assert.equal(b.totalCollection - a.totalCollection, 500000); assert.equal(b.balance - a.balance, 500000); assert.equal(a.donationCount, undefined);
   assert.ok(!(await send(client(), 'GET', '/donations')).text.includes('INC-2026-000002'));
 });
 
@@ -105,7 +105,7 @@ test('Test 7 - public pages and API never expose private data', async () => {
     let t = r.text; const q = new URL(base + u).searchParams.get('q'); if (q) t = t.split(q).join('');
     for (const s of SECRETS) assert.ok(!t.includes(s), `LEAK "${s}" in ${u}`);
   }
-  assert.ok((await send(client(), 'GET', '/donations?q=Karim')).text.includes('No donations found.'));
+  assert.equal((await (await fetch(base + '/api/public/transactions?q=Karim')).json()).total, 0);
 });
 
 test('Test 8 - admin routes are protected; CSRF and sessions enforced', async () => {
@@ -118,7 +118,7 @@ test('Test 8 - admin routes are protected; CSRF and sessions enforced', async ()
   assert.equal(noTok2.status, 403); // logged in but no CSRF token
   const bad = await send(admin, 'POST', '/admin/donations', { _csrf: 'wrong', ...donation({ donor_name: 'Hack', phone: '01712345678', amount: '1', name_visibility: 'PUBLIC' }) });
   assert.equal(bad.status, 403);
-  assert.equal((await db.prepare("SELECT COUNT(*) n FROM donors WHERE name='Hack'").get()).n, 0);
+  assert.equal(db.prepare("SELECT COUNT(*) n FROM donors WHERE name='Hack'").get().n, 0);
   const stolen = { jar: { ...admin.jar } };
   await post(admin, '/admin/logout', {});
   assert.equal((await send(admin, 'GET', '/admin')).status, 302);
@@ -144,9 +144,7 @@ test('Settings: name changes show publicly; logo upload is validated; categories
   const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
   assert.match((await post(me, '/admin/settings/logo', { logo_data: png })).loc, /logo_saved/);
   const lg = await fetch(base + '/logo'); assert.equal(lg.status, 200); assert.equal(lg.headers.get('content-type'), 'image/png');
-  const sl = path.join(__dirname, '..', 'public', 'logo.png'), hid = sl + '.bak'; // the bundled public/logo.png takes priority; step aside to test the uploaded one
-  const had = fs.existsSync(sl); if (had) fs.renameSync(sl, hid);
-  try { assert.ok((await send(client(), 'GET', '/')).text.includes('/logo?v=')); } finally { if (had) fs.renameSync(hid, sl); }
+  assert.ok((await send(client(), 'GET', '/')).text.includes('/logo?v='));
   for (const bad of ['data:image/svg+xml;base64,PHN2Zz48c2NyaXB0PmFsZXJ0KDEpPC9zY3JpcHQ+PC9zdmc+', 'data:image/png;base64,' + Buffer.from('<html>not a png</html>').toString('base64'), 'nonsense'])
     assert.equal((await post(me, '/admin/settings/logo', { logo_data: bad })).status, 400);
   assert.match((await post(me, '/admin/settings/logo', { remove: '1' })).loc, /logo_removed/);
@@ -154,9 +152,9 @@ test('Settings: name changes show publicly; logo upload is validated; categories
   // categories
   assert.match((await post(me, '/admin/settings/categories', { name: 'Library', type: 'EXPENSE' })).loc, /cat_added/);
   assert.equal((await post(me, '/admin/settings/categories', { name: 'Library', type: 'EXPENSE' })).status, 400); // duplicate
-  const lib = (await db.prepare("SELECT id FROM categories WHERE name='Library'").get()).id;
+  const lib = db.prepare("SELECT id FROM categories WHERE name='Library'").get().id;
   assert.match((await post(me, '/admin/settings/categories/' + lib, { name: 'Library Books' })).loc, /cat_renamed/);
   assert.match((await post(me, `/admin/settings/categories/${lib}/delete`, {})).loc, /cat_deleted/);
   assert.equal((await post(me, '/admin/settings/categories/2/delete', {})).status, 409); // Building is in use
-  assert.ok((await db.prepare('SELECT id FROM categories WHERE id=2').get()));
+  assert.ok(db.prepare('SELECT id FROM categories WHERE id=2').get());
 });

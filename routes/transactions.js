@@ -16,7 +16,7 @@ function dateRange(range, from, to) {
   return [null, null];
 }
 
-router.get('/', async (req, res) => {
+router.get('/', (req, res) => {
   const q = req.query, f = {
     q: clean(q.q), type: ['CREDIT', 'DEBIT'].includes(q.type) ? q.type : '',
     range: ['today', 'week', 'month', 'custom'].includes(q.range) ? q.range : '', from: clean(q.from, 10), to: clean(q.to, 10),
@@ -40,16 +40,16 @@ router.get('/', async (req, res) => {
   const where = w.length ? 'WHERE ' + w.join(' AND ') : '';
   const base = `FROM transactions t LEFT JOIN donors d ON d.id=t.donor_id LEFT JOIN categories c ON c.id=t.category_id ${where}`;
   const page = Math.max(1, parseInt(q.page) || 1), per = 25;
-  const total = (await db.prepare(`SELECT COUNT(*) n ${base}`).get(...a)).n;
-  const rows = (await db.prepare(`SELECT t.id,t.txn_id,t.type,t.date,t.amount,t.status,t.payment_method,t.purpose,t.description,
+  const total = db.prepare(`SELECT COUNT(*) n ${base}`).get(...a).n;
+  const rows = db.prepare(`SELECT t.id,t.txn_id,t.type,t.date,t.amount,t.status,t.payment_method,t.purpose,t.description,
       d.name donor_name, d.phone, c.name category ${base}
-      ORDER BY ${SORTS[f.sort]} ${f.dir.toUpperCase()}, t.id DESC LIMIT ? OFFSET ?`).all(...a, per, (page - 1) * per));
+      ORDER BY ${SORTS[f.sort]} ${f.dir.toUpperCase()}, t.id DESC LIMIT ? OFFSET ?`).all(...a, per, (page - 1) * per);
 
   // build links that keep the current filters
   const qs = (o = {}) => { const p = new URLSearchParams(); const m = { ...f, page: 1, ...o };
     for (const k of Object.keys(m)) if (m[k] !== '' && m[k] != null && !(k === 'page' && m[k] === 1)) p.set(k, m[k]);
     return '?' + p.toString(); };
-  const categories = (await db.prepare("SELECT id, name || CASE type WHEN 'INCOME' THEN ' (Income)' ELSE ' (Expense)' END AS label FROM categories ORDER BY type, name").all());
+  const categories = db.prepare("SELECT id, name || CASE type WHEN 'INCOME' THEN ' (Income)' ELSE ' (Expense)' END AS label FROM categories ORDER BY type, name").all();
   res.render('admin/transactions', { rows, f, qs, categories, methods: METHODS, total, pageNo: page, pages: Math.max(1, Math.ceil(total / per)), page: 'Transactions' });
 });
 

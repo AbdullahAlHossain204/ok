@@ -107,10 +107,17 @@ tbody tr:nth-child(even){background:#f8faf8}tbody tr:hover{background:#f1f6f2}
 .chart{min-width:520px}.card:has(.chart){overflow-x:auto}
 .factions .btn{white-space:nowrap}.factions{flex-wrap:wrap}
 
-/* logo placements (public site) */
-.emblem{object-fit:contain;padding:0;border-radius:10px;width:52px;height:52px;background:#fff}
-.hero-logo{display:block;width:132px;height:132px;margin:0 auto 14px;object-fit:contain;border-radius:14px;background:#fff;padding:4px;box-shadow:0 4px 18px rgba(0,0,0,.3)}
-.foot-logo{display:block;width:84px;height:84px;object-fit:contain;border-radius:10px;background:#fff;padding:3px;margin-bottom:10px}
-.about-logo{display:block;width:120px;height:120px;object-fit:contain;margin:0 0 12px}
-.bt strong{overflow-wrap:anywhere}
-@media(max-width:640px){.hero-logo{width:104px;height:104px}}
+/* ===== logo placement + statistics details ===== */
+.emblem{width:52px;height:52px;border-radius:10px;object-fit:contain;background:#fff;padding:2px}
+.hero-logo{width:190px;height:190px;object-fit:contain;background:#fff;border-radius:22px;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.28);margin:0 auto 14px;display:block}
+.fbrand{display:flex;gap:14px;align-items:flex-start}.flogo{width:64px;height:64px;flex:none;border-radius:12px;background:#fff;padding:3px;object-fit:contain}
+.about-logo{float:right;width:150px;height:150px;object-fit:contain;margin:0 0 12px 18px;border-radius:16px}
+.hero{padding-top:36px}
+details.month{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);margin:0 0 12px;overflow:hidden}
+details.month summary{cursor:pointer;padding:14px 16px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 16px;list-style:none}
+details.month summary::-webkit-details-marker{display:none}
+details.month summary::before{content:"▸";margin-right:8px;color:var(--gold)}details.month[open] summary::before{content:"▾"}
+details.month summary span{color:var(--muted);font-size:.92rem}
+details.month .recent{box-shadow:none;border-radius:0;border-top:1px solid var(--line);margin:0}.pad{padding:0 16px 14px}
+@media(max-width:640px){.hero-logo{width:140px;height:140px}.about-logo{float:none;display:block;margin:0 auto 14px}}
+details.month summary strong{margin-right:auto}

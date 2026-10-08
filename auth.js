@@ -15,24 +15,24 @@ const readCookie = (req, name) => {
   return null;
 };
 
-async function startSession(res, adminId) {
+function startSession(res, adminId) {
   const token = crypto.randomBytes(32).toString('hex');
-  (await db.prepare('DELETE FROM sessions WHERE expires_at < ?').run(Date.now()));
-  (await db.prepare('INSERT INTO sessions VALUES (?,?,?)').run(sha(token), adminId, Date.now() + DAYS * 864e5));
+  db.prepare('DELETE FROM sessions WHERE expires_at < ?').run(Date.now());
+  db.prepare('INSERT INTO sessions VALUES (?,?,?)').run(sha(token), adminId, Date.now() + DAYS * 864e5);
   res.cookie(COOKIE, token, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: DAYS * 864e5 });
 }
 
-async function endSession(req, res) {
+function endSession(req, res) {
   const t = readCookie(req, COOKIE);
-  if (t) (await db.prepare('DELETE FROM sessions WHERE token_hash=?').run(sha(t)));
+  if (t) db.prepare('DELETE FROM sessions WHERE token_hash=?').run(sha(t));
   res.clearCookie(COOKIE);
 }
 
 // Runs on every request: sets req.admin if the cookie holds a valid session
-async function loadAdmin(req, res, next) {
+function loadAdmin(req, res, next) {
   const t = readCookie(req, COOKIE);
-  req.admin = t ? (await db.prepare(`SELECT a.id, a.email FROM sessions s JOIN admins a ON a.id=s.admin_id
-                              WHERE s.token_hash=? AND s.expires_at>?`).get(sha(t), Date.now())) : null;
+  req.admin = t ? db.prepare(`SELECT a.id, a.email FROM sessions s JOIN admins a ON a.id=s.admin_id
+                              WHERE s.token_hash=? AND s.expires_at>?`).get(sha(t), Date.now()) : null;
   res.locals.admin = req.admin;
   next();
 }
@@ -51,7 +51,7 @@ const recordFail = (ip) => { const f = fails.get(ip); if (!f || f.reset < Date.n
 const clearFails = (ip) => fails.delete(ip);
 
 async function checkLogin(email, password) {
-  const a = (await db.prepare('SELECT * FROM admins WHERE email=?').get(String(email || '').trim().toLowerCase()));
+  const a = db.prepare('SELECT * FROM admins WHERE email=?').get(String(email || '').trim().toLowerCase());
   const ok = await bcrypt.compare(String(password || ''), a ? a.password_hash : DUMMY);
   return a && ok ? a : null;
 }

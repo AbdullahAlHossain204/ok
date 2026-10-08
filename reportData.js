@@ -2,19 +2,19 @@
 const { db } = require('./db');
 const { validDate, today, isoDay, fmtDate } = require('./money');
 
-async function summary(from, to) {
-  const r = (await db.prepare(`SELECT
+function summary(from, to) {
+  const r = db.prepare(`SELECT
     COALESCE(SUM(CASE WHEN type='CREDIT' THEN amount END),0) credit, COALESCE(SUM(CASE WHEN type='DEBIT' THEN amount END),0) debit,
     COUNT(CASE WHEN type='CREDIT' THEN 1 END) donations, COUNT(CASE WHEN type='DEBIT' THEN 1 END) expenses
-    FROM transactions WHERE status='COMPLETED' AND date>=? AND date<=?`).get(from, to));
+    FROM transactions WHERE status='COMPLETED' AND date>=? AND date<=?`).get(from, to);
   return { credit: r.credit, debit: r.debit, net: r.credit - r.debit, donations: r.donations, expenses: r.expenses };
 }
 
 // 12 monthly totals (Jan..Dec) for a year
-async function monthly(year) {
+function monthly(year) {
   const credit = Array(12).fill(0), debit = Array(12).fill(0);
-  (await db.prepare(`SELECT CAST(substr(date,6,2) AS INTEGER) m, type, SUM(amount) s FROM transactions
-    WHERE status='COMPLETED' AND date>=? AND date<=? GROUP BY m, type`).all(`${year}-01-01`, `${year}-12-31`))
+  db.prepare(`SELECT CAST(substr(date,6,2) AS INTEGER) m, type, SUM(amount) s FROM transactions
+    WHERE status='COMPLETED' AND date>=? AND date<=? GROUP BY m, type`).all(`${year}-01-01`, `${year}-12-31`)
     .forEach((r) => { (r.type === 'CREDIT' ? credit : debit)[r.m - 1] = r.s; });
   return { credit, debit };
 }

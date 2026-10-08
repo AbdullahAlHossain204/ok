@@ -3,6 +3,4 @@ node_modules
 *.db
 *.db-wal
 *.db-shm
-*.secret
-.dev-secret
 backups

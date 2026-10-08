@@ -7,7 +7,7 @@ const { db, nextTxnId, totals } = require('../db');
 const { summary, monthly, periodRange } = require('../reportData');
 test.after(() => { try { db.close(); } catch {} for (const s of ['', '-wal', '-shm']) fs.rmSync(file + s, { force: true }); });
 
-test('period ranges', async () => {
+test('period ranges', () => {
   assert.deepEqual([periodRange({ period: 'daily', date: '2026-10-06' }).from, periodRange({ period: 'daily', date: '2026-10-06' }).to], ['2026-10-06', '2026-10-06']);
   const w = periodRange({ period: 'weekly', date: '2026-10-06' }); // Tuesday -> Sat 3 Oct .. Fri 9 Oct
   assert.deepEqual([w.from, w.to], ['2026-10-03', '2026-10-09']);
@@ -21,20 +21,20 @@ test('period ranges', async () => {
   assert.equal(periodRange({ period: 'bogus' }).period, 'monthly');
 });
 
-test('summary and monthly use only COMPLETED, inclusive of boundary dates', async () => {
-  await db.exec("INSERT INTO donors(name,phone) VALUES('A','8801712345678')");
+test('summary and monthly use only COMPLETED, inclusive of boundary dates', () => {
+  db.exec("INSERT INTO donors(name,phone) VALUES('A','8801712345678')");
   const c = db.prepare("INSERT INTO transactions(txn_id,type,amount,date,donor_id,name_visibility,status) VALUES(?,'CREDIT',?,?,1,'PRIVATE',?)");
   const d = db.prepare("INSERT INTO transactions(txn_id,type,amount,date,status) VALUES(?,'DEBIT',?,?,?)");
-  await c.run((await nextTxnId('CREDIT', 2026)), 1000000, '2026-10-01', 'COMPLETED');   // first day
-  await c.run((await nextTxnId('CREDIT', 2026)), 500000, '2026-10-31', 'COMPLETED');    // last day
-  await c.run((await nextTxnId('CREDIT', 2026)), 999999, '2026-10-15', 'PENDING');      // ignored
-  await c.run((await nextTxnId('CREDIT', 2026)), 700000, '2026-11-01', 'COMPLETED');    // outside month
-  await d.run((await nextTxnId('DEBIT', 2026)), 350000, '2026-10-06', 'COMPLETED');
-  await d.run((await nextTxnId('DEBIT', 2026)), 111111, '2026-10-07', 'CANCELLED');     // ignored
-  const s = (await summary('2026-10-01', '2026-10-31'));
+  c.run(nextTxnId('CREDIT', 2026), 1000000, '2026-10-01', 'COMPLETED');   // first day
+  c.run(nextTxnId('CREDIT', 2026), 500000, '2026-10-31', 'COMPLETED');    // last day
+  c.run(nextTxnId('CREDIT', 2026), 999999, '2026-10-15', 'PENDING');      // ignored
+  c.run(nextTxnId('CREDIT', 2026), 700000, '2026-11-01', 'COMPLETED');    // outside month
+  d.run(nextTxnId('DEBIT', 2026), 350000, '2026-10-06', 'COMPLETED');
+  d.run(nextTxnId('DEBIT', 2026), 111111, '2026-10-07', 'CANCELLED');     // ignored
+  const s = summary('2026-10-01', '2026-10-31');
   assert.deepEqual(s, { credit: 1500000, debit: 350000, net: 1150000, donations: 2, expenses: 1 });
-  const m = (await monthly('2026'));
+  const m = monthly('2026');
   assert.equal(m.credit[9], 1500000); assert.equal(m.credit[10], 700000); assert.equal(m.debit[9], 350000); assert.equal(m.credit[0], 0);
-  const all = (await summary('2000-01-01', '2100-12-31')), t = (await totals());
+  const all = summary('2000-01-01', '2100-12-31'), t = totals();
   assert.equal(all.credit, t.credit); assert.equal(all.debit, t.debit); // reports agree with the home page totals
 });

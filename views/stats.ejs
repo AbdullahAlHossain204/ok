@@ -5,13 +5,19 @@
 <section class="cards">
 <div class="card"><span>Collected in <%= st.year %></span><strong><%= taka(st.totals.credit) %></strong></div>
 <div class="card"><span>Spent in <%= st.year %></span><strong><%= taka(st.totals.debit) %></strong></div>
-<div class="card gold"><span>Net for the year</span><strong><%= st.totals.net < 0 ? '−' + taka(-st.totals.net) : taka(st.totals.net) %></strong></div>
-<div class="card"><span>Donations received</span><strong><%= st.totals.donations %></strong></div></section>
+<div class="card gold"><span>Net for the year</span><strong><%= st.totals.net < 0 ? '−' + taka(-st.totals.net) : taka(st.totals.net) %></strong></div></section>
 <h2>Monthly Collection</h2><div class="card"><%- chartIn %></div>
 <h2>Monthly Expense</h2><div class="card"><%- chartOut %></div>
 <h2>Month by month</h2>
 <div class="tablewrap"><table class="resp"><thead><tr><th>Month</th><th>Collected</th><th>Spent</th><th>Net</th></tr></thead><tbody>
-<% ['January','February','March','April','May','June','July','August','September','October','November','December'].forEach((n, i) => { const c = st.monthly.credit[i], x = st.monthly.debit[i], net = c - x; %><tr><td data-label="Month"><%= n %></td><td data-label="Collected"><%= taka(c) %></td><td data-label="Spent"><%= taka(x) %></td><td data-label="Net"><%= net < 0 ? '−' + taka(-net) : taka(net) %></td></tr><% }) %></tbody></table></div>
-<div class="two"><% [['Collection by category', st.income, 'g'], ['Expenses by category', st.expense, 'o']].forEach(g => { const max = g[1].length ? g[1][0].total : 1; %><section><h2><%= g[0] %></h2>
-<% if (!g[1].length) { %><p class="empty">No data for <%= st.year %>.</p><% } else { %><ul class="catbars"><% g[1].forEach(r => { %><li><div class="row"><span><%= r.name %></span><strong><%= taka(r.total) %></strong></div><div class="meter small"><span class="<%= g[2] %>" style="width:<%= Math.max(2, Math.round(r.total * 100 / max)) %>%"></span></div></li><% }) %></ul><% } %></section><% }) %></div>
+<% const MN = ['January','February','March','April','May','June','July','August','September','October','November','December']; MN.forEach((n, i) => { const c = st.monthly.credit[i], x = st.monthly.debit[i], net = c - x; %><tr><td data-label="Month"><%= n %></td><td data-label="Collected"><%= taka(c) %></td><td data-label="Spent"><%= taka(x) %></td><td data-label="Net"><%= net < 0 ? '−' + taka(-net) : taka(net) %></td></tr><% }) %></tbody></table></div>
+<h2>Who donated each month</h2>
+<% const active = MN.map((n, i) => i).filter(i => st.donors[i].length || st.monthly.debit[i]).reverse(); %>
+<% if (!active.length) { %><p class="empty">No data for <%= st.year %>.</p><% } else { %>
+<% active.forEach((i, k) => { %><details class="month" <%= k === 0 ? 'open' : '' %>><summary><strong><%= MN[i] %> <%= st.year %></strong><span>Collected <%= taka(st.monthly.credit[i]) %> · Spent <%= taka(st.monthly.debit[i]) %></span></summary>
+<% if (!st.donors[i].length) { %><p class="muted pad">No donations this month.</p><% } else { %><ul class="recent"><% st.donors[i].forEach(r => { %><li><span><%= r.displayName %><small><%= fmtDate(r.date) %></small></span><strong><%= taka(r.amount) %></strong></li><% }) %></ul><% } %></details><% }) %>
+<% } %>
+<h2>Collection by category</h2>
+<% const max = st.income.length ? st.income[0].total : 1; %>
+<% if (!st.income.length) { %><p class="empty">No data for <%= st.year %>.</p><% } else { %><ul class="catbars"><% st.income.forEach(r => { %><li><div class="row"><span><%= r.name %></span><strong><%= taka(r.total) %></strong></div><div class="meter small"><span class="g" style="width:<%= Math.max(2, Math.round(r.total * 100 / max)) %>%"></span></div></li><% }) %></ul><% } %>
 <%- include('partials/footer') %>
