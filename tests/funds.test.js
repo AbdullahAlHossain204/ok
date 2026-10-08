@@ -10,7 +10,7 @@ let server, base;
 test.before(async () => { await new Promise((r) => { server = app.listen(0, r); }); base = 'http://localhost:' + server.address().port; });
 test.after(() => { server.close(); try { db.close(); } catch {} for (const s of ['', '-wal', '-shm']) fs.rmSync(file + s, { force: true }); });
 
-test('progress math is exact (example: 12,50,000 of 20,00,000 = 62.5%)', () => {
+test('progress math is exact (example: 12,50,000 of 20,00,000 = 62.5%)', async () => {
   assert.equal(progress(125000000, 200000000), 62.5);
   assert.equal(progress(0, 100), 0);
   assert.equal(progress(5, 0), null);            // no target: no division by zero
@@ -19,12 +19,12 @@ test('progress math is exact (example: 12,50,000 of 20,00,000 = 62.5%)', () => {
 });
 
 test('public fund API: only COMPLETED donations count, closed funds hidden, no private data', async () => {
-  db.exec("INSERT INTO donors(name,phone) VALUES('SecretKarim','8801812345678')");
-  db.exec("INSERT INTO funds(name,target,status) VALUES('Building Fund',200000000,'ACTIVE'),('Old Fund',100,'CLOSED'),('Food Fund',0,'ACTIVE')");
+  await db.exec("INSERT INTO donors(name,phone) VALUES('SecretKarim','8801812345678')");
+  await db.exec("INSERT INTO funds(name,target,status) VALUES('Building Fund',200000000,'ACTIVE'),('Old Fund',100,'CLOSED'),('Food Fund',0,'ACTIVE')");
   const ins = db.prepare("INSERT INTO transactions(txn_id,type,amount,date,donor_id,name_visibility,status,fund_id) VALUES(?,?,?,?,1,'PRIVATE',?,?)");
-  ins.run(nextTxnId('CREDIT', 2026), 'CREDIT', 125000000, '2026-10-06', 'COMPLETED', 1);
-  ins.run(nextTxnId('CREDIT', 2026), 'CREDIT', 99999999, '2026-10-06', 'PENDING', 1);
-  ins.run(nextTxnId('CREDIT', 2026), 'CREDIT', 5000, '2026-10-06', 'COMPLETED', 3);
+  await ins.run((await nextTxnId('CREDIT', 2026)), 'CREDIT', 125000000, '2026-10-06', 'COMPLETED', 1);
+  await ins.run((await nextTxnId('CREDIT', 2026)), 'CREDIT', 99999999, '2026-10-06', 'PENDING', 1);
+  await ins.run((await nextTxnId('CREDIT', 2026)), 'CREDIT', 5000, '2026-10-06', 'COMPLETED', 3);
   const api = await (await fetch(base + '/api/public/funds')).json();
   assert.equal(api.funds.length, 2);
   const b = api.funds.find((f) => f.name === 'Building Fund');

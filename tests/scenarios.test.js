@@ -28,7 +28,7 @@ const PUBLIC_URLS = ['/', '/donations', '/expenses', '/transactions', '/about', 
 const SECRETS = ['Md. Karim', '8801812345678', '01812345678', '8801712345678', '01712345678', 'karim-note', 'admin@scen.test', 'wa.me'];
 
 test.before(async () => {
-  db.prepare('INSERT INTO admins(email,password_hash) VALUES(?,?)').run('admin@scen.test', bcrypt.hashSync('GoodPass123', 4));
+  (await db.prepare('INSERT INTO admins(email,password_hash) VALUES(?,?)').run('admin@scen.test', bcrypt.hashSync('GoodPass123', 4)));
   await new Promise((r) => { server = app.listen(0, r); });
   base = 'http://localhost:' + server.address().port;
   admin = client();
@@ -117,7 +117,7 @@ test('Test 8 - admin routes are protected; CSRF and sessions enforced', async ()
   assert.equal(noTok2.status, 403); // logged in but no CSRF token
   const bad = await send(admin, 'POST', '/admin/donations', { _csrf: 'wrong', ...donation({ donor_name: 'Hack', phone: '01712345678', amount: '1', name_visibility: 'PUBLIC' }) });
   assert.equal(bad.status, 403);
-  assert.equal(db.prepare("SELECT COUNT(*) n FROM donors WHERE name='Hack'").get().n, 0);
+  assert.equal((await db.prepare("SELECT COUNT(*) n FROM donors WHERE name='Hack'").get()).n, 0);
   const stolen = { jar: { ...admin.jar } };
   await post(admin, '/admin/logout', {});
   assert.equal((await send(admin, 'GET', '/admin')).status, 302);
@@ -151,9 +151,9 @@ test('Settings: name changes show publicly; logo upload is validated; categories
   // categories
   assert.match((await post(me, '/admin/settings/categories', { name: 'Library', type: 'EXPENSE' })).loc, /cat_added/);
   assert.equal((await post(me, '/admin/settings/categories', { name: 'Library', type: 'EXPENSE' })).status, 400); // duplicate
-  const lib = db.prepare("SELECT id FROM categories WHERE name='Library'").get().id;
+  const lib = (await db.prepare("SELECT id FROM categories WHERE name='Library'").get()).id;
   assert.match((await post(me, '/admin/settings/categories/' + lib, { name: 'Library Books' })).loc, /cat_renamed/);
   assert.match((await post(me, `/admin/settings/categories/${lib}/delete`, {})).loc, /cat_deleted/);
   assert.equal((await post(me, '/admin/settings/categories/2/delete', {})).status, 409); // Building is in use
-  assert.ok(db.prepare('SELECT id FROM categories WHERE id=2').get());
+  assert.ok((await db.prepare('SELECT id FROM categories WHERE id=2').get()));
 });

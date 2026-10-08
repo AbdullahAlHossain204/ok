@@ -6,7 +6,7 @@ process.env.DB_FILE = file; delete process.env.SESSION_SECRET; delete process.en
 const { db } = require('../db');
 test.after(() => { try { db.close(); } catch {} for (const s of ['', '-wal', '-shm']) fs.rmSync(file + s, { force: true }); });
 
-test('form tokens survive a server restart even without SESSION_SECRET (dev)', () => {
+test('form tokens survive a server restart even without SESSION_SECRET (dev)', async () => {
   const cookie = 'a'.repeat(64);
   const t1 = require('../security').tokenFor(cookie);
   delete require.cache[require.resolve('../security')];           // simulate restart

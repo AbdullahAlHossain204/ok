@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title><%= page %> | Admin</title><meta name="robots" content="noindex"><link rel="stylesheet" href="/style.css"><script src="/admin.js" defer></script></head><body>
-<header class="top"><div class="wrap bar"><a class="brand" href="/admin"><% if (site.logo_v) { %><img class="logo" src="/logo?v=<%= site.logo_v %>" alt=""><% } %><%= site.short_name || site.name %> Admin</a>
+<header class="top"><div class="wrap bar"><a class="brand" href="/admin"><% if (site.logo_v) { %><img class="logo" src="/logo?v=<%= site.logo_v %>" alt=""><% } %><%= site.name %> Admin</a>
 <form method="post" action="/admin/logout"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn small" type="submit">Log out</button></form></div>
 <div class="wrap"><nav class="adminnav" aria-label="Admin"><% [['/admin','Dashboard'],['/admin/donations','Donations'],['/admin/expenses','Expenses'],['/admin/transactions','Transactions'],['/admin/donors','Donors'],['/admin/funds','Funds'],['/admin/reports','Reports'],['/admin/settings','Settings']].forEach(l=>{ %><a href="<%= l[0] %>" <%- path===l[0]?'aria-current="page"':'' %>><%= l[1] %></a><% }) %></nav></div></header><main class="wrap"><% if (flash) { %><p class="ok" role="status"><%= flash %></p><% } %>

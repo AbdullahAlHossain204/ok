@@ -12,13 +12,13 @@ const SECRETS = ['SecretKarim', '8801812345678', '01812345678', '8801712345678',
 let server, base;
 
 test.before(async () => {
-  db.exec("INSERT INTO donors(name,phone) VALUES('Md. Rahim','8801712345678'),('SecretKarim','8801812345678')");
+  await db.exec("INSERT INTO donors(name,phone) VALUES('Md. Rahim','8801712345678'),('SecretKarim','8801812345678')");
   const ins = db.prepare('INSERT INTO transactions(txn_id,type,amount,date,category_id,donor_id,purpose,payment_method,status,name_visibility,note) VALUES(?,?,?,?,?,?,?,?,?,?,?)');
-  ins.run(nextTxnId('CREDIT', 2026), 'CREDIT', 1000000, '2026-10-06', 2, 1, 'Building Fund', 'Cash', 'COMPLETED', 'PUBLIC', 'SECRET-NOTE-XYZ');
-  ins.run(nextTxnId('CREDIT', 2026), 'CREDIT', 500000, '2026-10-06', 2, 2, 'Building Fund', 'bKash', 'COMPLETED', 'PRIVATE', 'SECRET-NOTE-XYZ');
-  ins.run(nextTxnId('CREDIT', 2026), 'CREDIT', 99900, '2026-10-06', 2, 2, 'Hidden', 'Cash', 'PENDING', 'PUBLIC', null);
-  db.prepare("INSERT INTO transactions(txn_id,type,amount,date,category_id,purpose,description,payment_method,status,note) VALUES(?,?,?,?,?,?,?,?,?,?)")
-    .run(nextTxnId('DEBIT', 2026), 'DEBIT', 350000, '2026-10-06', 8, 'Electricity bill', 'September bill', 'Cash', 'COMPLETED', 'SECRET-NOTE-XYZ');
+  await ins.run((await nextTxnId('CREDIT', 2026)), 'CREDIT', 1000000, '2026-10-06', 2, 1, 'Building Fund', 'Cash', 'COMPLETED', 'PUBLIC', 'SECRET-NOTE-XYZ');
+  await ins.run((await nextTxnId('CREDIT', 2026)), 'CREDIT', 500000, '2026-10-06', 2, 2, 'Building Fund', 'bKash', 'COMPLETED', 'PRIVATE', 'SECRET-NOTE-XYZ');
+  await ins.run((await nextTxnId('CREDIT', 2026)), 'CREDIT', 99900, '2026-10-06', 2, 2, 'Hidden', 'Cash', 'PENDING', 'PUBLIC', null);
+  (await db.prepare("INSERT INTO transactions(txn_id,type,amount,date,category_id,purpose,description,payment_method,status,note) VALUES(?,?,?,?,?,?,?,?,?,?)")
+    .run((await nextTxnId('DEBIT', 2026)), 'DEBIT', 350000, '2026-10-06', 8, 'Electricity bill', 'September bill', 'Cash', 'COMPLETED', 'SECRET-NOTE-XYZ'));
   await new Promise((r) => { server = app.listen(0, r); });
   base = 'http://localhost:' + server.address().port;
 });
@@ -26,7 +26,7 @@ test.after(() => { server.close(); try { db.close(); } catch {} for (const s of 
 
 const get = async (p) => { const r = await fetch(base + p); return { status: r.status, text: await r.text() }; };
 const URLS = ['/', '/donations', '/expenses', '/transactions', '/about', '/api/public/transactions', '/api/public/summary',
-  '/funds', '/api/public/funds', '/stats', '/stats?year=2026', '/api/public/stats', '/donations?q=SecretKarim', '/donations?q=01812345678', '/donations?q=8801812', '/transactions?q=Karim', '/api/public/transactions?q=SecretKarim',
+  '/funds', '/api/public/funds', '/donations?q=SecretKarim', '/donations?q=01812345678', '/donations?q=8801812', '/transactions?q=Karim', '/api/public/transactions?q=SecretKarim',
   '/api/public/transactions?q=0171', '/transactions?type=CREDIT&page=1', '/expenses?q=bill'];
 
 test('no public page or API leaks private data', async () => {

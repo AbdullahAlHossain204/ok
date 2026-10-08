@@ -7,17 +7,18 @@
     "dev": "node --watch server.js",
     "seed": "node scripts/seed.js",
     "test": "node --test",
-    "backup": "node scripts/backup.js"
+    "backup": "node scripts/backup.js",
+    "migrate": "node scripts/migrate-local-to-turso.js"
   },
   "engines": {
     "node": ">=22.13"
   },
   "dependencies": {
+    "@libsql/client": "^0.18.0",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
-    "exceljs": "^4.4.0",
     "express": "^4.21.0",
-    "pdfkit": "^0.20.2"
+    "express-async-errors": "^3.1.1"
   }
 }
