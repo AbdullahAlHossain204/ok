@@ -1,7 +1,23 @@
 const router = require('express').Router();
 const { summary, monthly, periodRange } = require('../reportData');
 const { bars } = require('../charts');
+const { exportRange, loadExport, buildXlsx, buildPdf } = require('../exporter');
 const GREEN = '#0b4d3a', GOLD = '#c9a227';
+
+// Admin-only downloads (this router sits behind the admin login)
+const fname = (range, ext) => `madrasa-report_${range.from}_to_${range.to}.${ext}`;
+router.get('/export.xlsx', async (req, res, next) => {
+  try {
+    const range = exportRange(req.query), buf = await buildXlsx(loadExport(range), res.locals.site);
+    res.set({ 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Content-Disposition': `attachment; filename="${fname(range, 'xlsx')}"` }).send(Buffer.from(buf));
+  } catch (e) { next(e); }
+});
+router.get('/export.pdf', async (req, res, next) => {
+  try {
+    const range = exportRange(req.query), buf = await buildPdf(loadExport(range), res.locals.site);
+    res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="${fname(range, 'pdf')}"` }).send(buf);
+  } catch (e) { next(e); }
+});
 
 router.get('/', (req, res) => {
   const p = periodRange(req.query);

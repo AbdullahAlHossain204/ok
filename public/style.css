@@ -105,3 +105,4 @@ tbody tr:nth-child(even){background:#f8faf8}tbody tr:hover{background:#f1f6f2}
 @media print{.site-head,.site-foot,.cta{display:none}}
 
 .chart{min-width:520px}.card:has(.chart){overflow-x:auto}
+.factions .btn{white-space:nowrap}.factions{flex-wrap:wrap}
