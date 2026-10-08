@@ -100,7 +100,7 @@ if (require.main === module) {
 import { createClient } from "@libsql/client";
 // OR if using CommonJS: const { createClient } = require("@libsql/client");
 
-const db = createClient({
+ db = createClient({
   url: process.env.TURSO_DATABASE_URL,
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
