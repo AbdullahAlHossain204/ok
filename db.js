@@ -41,6 +41,12 @@ const scols = db.prepare('PRAGMA table_info(settings)').all().map((c) => c.name)
 if (!scols.includes('logo')) db.exec('ALTER TABLE settings ADD COLUMN logo BLOB');
 if (!scols.includes('logo_type')) db.exec('ALTER TABLE settings ADD COLUMN logo_type TEXT');
 if (!scols.includes('logo_v')) db.exec('ALTER TABLE settings ADD COLUMN logo_v INTEGER');
+if (!scols.includes('name_bn')) db.exec('ALTER TABLE settings ADD COLUMN name_bn TEXT');
+if (!scols.includes('short_name')) db.exec('ALTER TABLE settings ADD COLUMN short_name TEXT');
+db.prepare("UPDATE settings SET name=?, name_bn=?, short_name=?, title=?, description=? WHERE id=1 AND name='Madrasa'").run(
+  'Afsharia Darul Ulum Nurani Hafizia Madrasha & Orphanage', 'আফছারিয়া দারুল উলুম নুরানী হাফিজিয়া এতিমখানা', 'Afsharia Madrasa',
+  'Afsharia Madrasha Fund Transparency',
+  'A madrasa and orphanage providing Nurani and Hifz education and care for orphans. This website shows every donation received and every expense paid, openly.');
 db.exec('CREATE INDEX IF NOT EXISTS idx_txn_donor ON transactions(donor_id); CREATE INDEX IF NOT EXISTS idx_txn_fund ON transactions(fund_id); CREATE INDEX IF NOT EXISTS idx_txn_cat ON transactions(category_id);');
 // Default categories (only added if missing)
 const addCat = db.prepare('INSERT OR IGNORE INTO categories(name,type) VALUES(?,?)');

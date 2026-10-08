@@ -10,6 +10,10 @@ and private donor names hidden. Includes a secure admin panel.
 4. Create your admin account:  `npm run seed`
 5. Start:  `npm start`  then open http://localhost:3000  (admin: http://localhost:3000/admin/login)
 
+## Branding
+The Madrasa name (English and Bengali), short name, address, phone, description and logo are all editable in Admin → Settings.
+The colours are the first lines of `public/style.css` (`--green`, `--gold`). The footer credit "Website powered by AJ Limited" is in `views/partials/footer.ejs`.
+
 ## Everyday commands
 - `npm test`        runs all automated tests (privacy, totals, reports, the 8 final scenarios)
 - `npm run backup`  saves a copy of the database into the `backups` folder

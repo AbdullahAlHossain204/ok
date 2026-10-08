@@ -44,11 +44,6 @@ function csrfVerify(req, res, next) {
   const given = Buffer.from(String((req.body && req.body._csrf) || ''));
   const want = Buffer.from(sign(req.csrfCookie));
   if (given.length === want.length && crypto.timingSafeEqual(given, want)) return next();
-  // Diagnostic: say exactly why the form was refused (visible in the terminal running the server)
-  const why = !((req.headers.cookie || '').includes('csrf=')) ? 'browser sent NO csrf cookie (cookies blocked, Secure cookie over http, or different address)'
-    : !(req.body && req.body._csrf) ? 'form sent NO _csrf field (template problem)'
-    : 'token did not match (old page or changed SESSION_SECRET)';
-  console.warn('[CSRF refused] ' + req.method + ' ' + req.originalUrl + ' -> ' + why);
   let backLink = '/admin';
   try { const u = new URL(req.get('referer') || ''); if (u.host === req.get('host') && u.pathname.startsWith('/')) backLink = u.pathname + u.search; } catch {}
   res.status(403).render('error', { page: 'Form expired', backLink, msg: 'Your form expired, so nothing was saved. This can happen if the page was open for a long time or the server restarted. Click the button to reload the form and try again.' });

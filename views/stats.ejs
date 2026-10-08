@@ -1,0 +1,17 @@
+<%- include('partials/header') %>
+<div class="head"><h1>Statistics</h1>
+<form method="get" class="yearpick"><label for="year">Year</label><select id="year" name="year"><% st.years.forEach(y => { %><option <%= y === st.year ? 'selected' : '' %>><%= y %></option><% }) %></select><button class="btn small" type="submit">Show</button></form></div>
+<p class="muted">Figures for <%= st.year %>. Only completed transactions are counted.</p>
+<section class="cards">
+<div class="card"><span>Collected in <%= st.year %></span><strong><%= taka(st.totals.credit) %></strong></div>
+<div class="card"><span>Spent in <%= st.year %></span><strong><%= taka(st.totals.debit) %></strong></div>
+<div class="card gold"><span>Net for the year</span><strong><%= st.totals.net < 0 ? '−' + taka(-st.totals.net) : taka(st.totals.net) %></strong></div>
+<div class="card"><span>Donations received</span><strong><%= st.totals.donations %></strong></div></section>
+<h2>Monthly Collection</h2><div class="card"><%- chartIn %></div>
+<h2>Monthly Expense</h2><div class="card"><%- chartOut %></div>
+<h2>Month by month</h2>
+<div class="tablewrap"><table class="resp"><thead><tr><th>Month</th><th>Collected</th><th>Spent</th><th>Net</th></tr></thead><tbody>
+<% ['January','February','March','April','May','June','July','August','September','October','November','December'].forEach((n, i) => { const c = st.monthly.credit[i], x = st.monthly.debit[i], net = c - x; %><tr><td data-label="Month"><%= n %></td><td data-label="Collected"><%= taka(c) %></td><td data-label="Spent"><%= taka(x) %></td><td data-label="Net"><%= net < 0 ? '−' + taka(-net) : taka(net) %></td></tr><% }) %></tbody></table></div>
+<div class="two"><% [['Collection by category', st.income, 'g'], ['Expenses by category', st.expense, 'o']].forEach(g => { const max = g[1].length ? g[1][0].total : 1; %><section><h2><%= g[0] %></h2>
+<% if (!g[1].length) { %><p class="empty">No data for <%= st.year %>.</p><% } else { %><ul class="catbars"><% g[1].forEach(r => { %><li><div class="row"><span><%= r.name %></span><strong><%= taka(r.total) %></strong></div><div class="meter small"><span class="<%= g[2] %>" style="width:<%= Math.max(2, Math.round(r.total * 100 / max)) %>%"></span></div></li><% }) %></ul><% } %></section><% }) %></div>
+<%- include('partials/footer') %>

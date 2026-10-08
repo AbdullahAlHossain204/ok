@@ -3,7 +3,9 @@
 <% if (errors.length) { %><div class="alert" role="alert"><ul><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul></div><% } %>
 <h2>Website</h2>
 <form method="post" action="/admin/settings" class="card form"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
-<label for="name">Madrasa name</label><input id="name" name="name" value="<%= s.name %>" required maxlength="100">
+<label for="name">Madrasa name (English)</label><input id="name" name="name" value="<%= s.name %>" required maxlength="150">
+<label for="name_bn">Madrasa name (Bengali)</label><input id="name_bn" name="name_bn" lang="bn" value="<%= s.name_bn || '' %>" maxlength="150">
+<label for="short_name">Short name <small>(used in the menu bar and WhatsApp messages)</small></label><input id="short_name" name="short_name" value="<%= s.short_name || '' %>" maxlength="60">
 <label for="title">Website title <small>(shown in the browser tab)</small></label><input id="title" name="title" value="<%= s.title %>" required maxlength="100">
 <label for="description">Description (shown on the About page)</label><textarea id="description" name="description" rows="3" maxlength="500"><%= s.description %></textarea>
 <label for="address">Address</label><input id="address" name="address" value="<%= s.address || '' %>" maxlength="300">

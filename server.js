@@ -3,6 +3,9 @@ const express = require('express');
 const path = require('path');
 const { db, totals } = require('./db');
 const { list } = require('./publicData');
+const { monthly } = require('./reportData');
+const { bars } = require('./charts');
+const { today } = require('./money');
 const { taka, fmtDate } = require('./money');
 const auth = require('./auth');
 const security = require('./security');
@@ -18,10 +21,10 @@ app.use(express.static('public'));
 app.use((req, res, next) => {
   res.locals.taka = taka;
   res.locals.fmtDate = fmtDate;
-  res.locals.site = db.prepare('SELECT id,name,address,phone,description,title,logo_v FROM settings WHERE id=1').get();
+  res.locals.site = db.prepare('SELECT id,name,name_bn,short_name,address,phone,description,title,logo_v FROM settings WHERE id=1').get();
   res.locals.path = req.path;
   // WhatsApp link for a COMPLETED donation (null if not available or phone invalid)
-  res.locals.waLink = (t) => (t.status === 'COMPLETED' ? donationLink(t, res.locals.site.name) : null);
+  res.locals.waLink = (t) => (t.status === 'COMPLETED' ? donationLink(t, res.locals.site.short_name || res.locals.site.name) : null);
   next();
 });
 
@@ -40,7 +43,8 @@ app.get('/logo', (req, res) => {
 });
 
 // ---------- Public ----------
-app.get('/', (req, res) => res.render('home', { t: totals(), page: 'Home',
+app.get('/', (req, res) => res.render('home', { t: totals(), page: 'Home', hero: true, year: today().slice(0, 4),
+  chart: bars([{ name: 'Collection', color: '#0b4d3a', values: monthly(today().slice(0, 4)).credit }], 'Monthly collection this year'),
   donations: list({ kind: 'donations', per: 5 }).rows, expenses: list({ kind: 'expenses', per: 5 }).rows }));
 app.use(require('./routes/public'));
 

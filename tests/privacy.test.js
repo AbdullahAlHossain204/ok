@@ -26,7 +26,7 @@ test.after(() => { server.close(); try { db.close(); } catch {} for (const s of 
 
 const get = async (p) => { const r = await fetch(base + p); return { status: r.status, text: await r.text() }; };
 const URLS = ['/', '/donations', '/expenses', '/transactions', '/about', '/api/public/transactions', '/api/public/summary',
-  '/funds', '/api/public/funds', '/donations?q=SecretKarim', '/donations?q=01812345678', '/donations?q=8801812', '/transactions?q=Karim', '/api/public/transactions?q=SecretKarim',
+  '/funds', '/api/public/funds', '/stats', '/stats?year=2026', '/api/public/stats', '/donations?q=SecretKarim', '/donations?q=01812345678', '/donations?q=8801812', '/transactions?q=Karim', '/api/public/transactions?q=SecretKarim',
   '/api/public/transactions?q=0171', '/transactions?type=CREDIT&page=1', '/expenses?q=bill'];
 
 test('no public page or API leaks private data', async () => {
