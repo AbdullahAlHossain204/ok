@@ -1,5 +1,6 @@
 const router = require('express').Router();
-const { list, categories, listFunds } = require('../publicData');
+const { list, categories, listFunds, stats } = require('../publicData');
+const { bars } = require('../charts');
 const { totals } = require('../db');
 
 const PAGES = {
@@ -21,6 +22,12 @@ for (const kind of Object.keys(PAGES)) {
 }
 
 router.get('/funds', async (req, res) => res.render('public_funds', { page: 'Funds & Projects', desc: 'Our current funds and projects, with live progress toward each target.', funds: (await listFunds()) }));
+router.get('/stats', async (req, res) => {
+  const st = (await stats(req.query.year));
+  res.render('stats', { st, page: 'Statistics', desc: 'Monthly collection and expenses, with a breakdown by category.',
+    chartIn: bars([{ name: 'Collection', color: '#0b4d3a', values: st.monthly.credit }], `Monthly collection ${st.year}`),
+    chartOut: bars([{ name: 'Expense', color: '#c9a227', values: st.monthly.debit }], `Monthly expense ${st.year}`) });
+});
 router.get('/about', async (req, res) => res.render('about', { page: 'About', desc: res.locals.site.description }));
 
 // ----- public JSON API (same sanitized data) -----
@@ -29,6 +36,13 @@ router.get('/api/public/transactions', async (req, res) => {
   res.set('Cache-Control', 'public, max-age=30').json({ items: r.rows, page: r.page, pages: r.pages, total: r.total });
 });
 router.get('/api/public/funds', async (req, res) => res.set('Cache-Control', 'public, max-age=30').json({ funds: (await listFunds()), unit: 'poisha' }));
+router.get('/api/public/stats', async (req, res) => {
+  const st = (await stats(req.query.year));
+  res.set('Cache-Control', 'public, max-age=30').json({ year: st.year, unit: 'poisha',
+    months: st.monthly.credit.map((c, i) => ({ month: i + 1, collected: c, spent: st.monthly.debit[i] })),
+    totalCollected: st.totals.credit, totalSpent: st.totals.debit, donationCount: st.totals.donations,
+    collectedByCategory: st.income.map((r) => ({ category: r.name, amount: r.total })), spentByCategory: st.expense.map((r) => ({ category: r.name, amount: r.total })) });
+});
 router.get('/api/public/summary', async (req, res) => {
   const t = (await totals());
   res.set('Cache-Control', 'public, max-age=30').json({ totalCollection: t.credit, totalExpense: t.debit, balance: t.balance, donationCount: t.donations, currency: 'BDT', unit: 'poisha' });

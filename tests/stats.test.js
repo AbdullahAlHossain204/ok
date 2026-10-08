@@ -7,13 +7,13 @@ const { db, nextTxnId } = require('../db');
 const app = require('../server');
 let server, base;
 test.before(async () => {
-  db.exec("INSERT INTO donors(name,phone) VALUES('SecretKarim','8801812345678')");
+  await db.exec("INSERT INTO donors(name,phone) VALUES('SecretKarim','8801812345678')");
   const c = db.prepare("INSERT INTO transactions(txn_id,type,amount,date,category_id,donor_id,name_visibility,status) VALUES(?,'CREDIT',?,?,?,1,'PRIVATE',?)");
   const d = db.prepare("INSERT INTO transactions(txn_id,type,amount,date,category_id,status) VALUES(?,'DEBIT',?,?,?,?)");
-  c.run(nextTxnId('CREDIT', 2025), 1000000, '2025-03-05', 2, 'COMPLETED'); c.run(nextTxnId('CREDIT', 2025), 500000, '2025-03-28', 2, 'COMPLETED');
-  c.run(nextTxnId('CREDIT', 2025), 700000, '2025-07-01', 1, 'COMPLETED'); c.run(nextTxnId('CREDIT', 2025), 999999, '2025-03-10', 2, 'PENDING'); // pending: ignored
-  c.run(nextTxnId('CREDIT', 2024), 300000, '2024-12-31', 1, 'COMPLETED');                                                                        // other year
-  d.run(nextTxnId('DEBIT', 2025), 350000, '2025-03-06', 8, 'COMPLETED'); d.run(nextTxnId('DEBIT', 2025), 111111, '2025-03-07', 8, 'CANCELLED');
+  c.run((await nextTxnId('CREDIT', 2025)), 1000000, '2025-03-05', 2, 'COMPLETED'); c.run((await nextTxnId('CREDIT', 2025)), 500000, '2025-03-28', 2, 'COMPLETED');
+  c.run((await nextTxnId('CREDIT', 2025)), 700000, '2025-07-01', 1, 'COMPLETED'); c.run((await nextTxnId('CREDIT', 2025)), 999999, '2025-03-10', 2, 'PENDING'); // pending: ignored
+  c.run((await nextTxnId('CREDIT', 2024)), 300000, '2024-12-31', 1, 'COMPLETED');                                                                        // other year
+  d.run((await nextTxnId('DEBIT', 2025)), 350000, '2025-03-06', 8, 'COMPLETED'); d.run((await nextTxnId('DEBIT', 2025)), 111111, '2025-03-07', 8, 'CANCELLED');
   await new Promise((r) => { server = app.listen(0, r); }); base = 'http://localhost:' + server.address().port;
 });
 test.after(() => { server.close(); try { db.close(); } catch {} for (const s of ['', '-wal', '-shm']) fs.rmSync(file + s, { force: true }); });

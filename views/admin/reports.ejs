@@ -22,4 +22,11 @@
 <h2>Monthly figures, <%= year %></h2>
 <div class="tablewrap"><table><thead><tr><th>Month</th><th>Credit</th><th>Debit</th><th>Net</th></tr></thead><tbody>
 <% ['January','February','March','April','May','June','July','August','September','October','November','December'].forEach((n, i) => { const net = m.credit[i] - m.debit[i]; %><tr><td><%= n %></td><td><%= taka(m.credit[i]) %></td><td><%= taka(m.debit[i]) %></td><td><%= net < 0 ? '−' + taka(-net) : taka(net) %></td></tr><% }) %></tbody></table></div>
+<h2>Download <small class="muted">(admin only)</small></h2>
+<form method="get" class="card filters">
+<div><label for="xrange">Include</label><select id="xrange" name="range"><option value="all">All history</option><option value="month">This month</option><option value="year">This year</option><option value="custom">Custom range</option></select></div>
+<div><label for="xfrom">From (custom range)</label><input id="xfrom" name="from" type="date"></div>
+<div><label for="xto">To (custom range)</label><input id="xto" name="to" type="date"></div>
+<div class="factions"><button class="btn small" type="submit" formaction="/admin/reports/export.xlsx">⬇ Excel (.xlsx)</button><button class="btn small alt" type="submit" formaction="/admin/reports/export.pdf">⬇ PDF</button></div></form>
+<p class="muted">Excel has Summary, Monthly, Weekly and Transactions sheets (with live formulas). The PDF has the summary, monthly and weekly tables and the transaction list. These files contain private donor information, so keep them safe.</p>
 <%- include('../partials/footer') %>

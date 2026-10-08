@@ -3,7 +3,7 @@ const { db } = require('../db');
 
 const clean = (s, n) => String(s || '').trim().slice(0, n);
 const cats = async (type) => (await db.prepare(`SELECT c.id, c.name, (SELECT COUNT(*) FROM transactions t WHERE t.category_id=c.id) used FROM categories c WHERE c.type=? ORDER BY c.name`).all(type));
-const row = async () => (await db.prepare('SELECT name,title,description,address,phone,logo_v FROM settings WHERE id=1').get());
+const row = async () => (await db.prepare('SELECT name,name_bn,short_name,title,description,address,phone,logo_v FROM settings WHERE id=1').get());
 
 const render = async (res, o = {}) => res.status((o.errors && o.errors.length) || o.catError ? 400 : 200).render('admin/settings',
   { s: (await row()), income: (await cats('INCOME')), expense: (await cats('EXPENSE')), errors: [], catError: null, page: 'Settings', ...o });
@@ -11,12 +11,12 @@ const render = async (res, o = {}) => res.status((o.errors && o.errors.length) |
 router.get('/', async (req, res) => (await render(res)));
 
 router.post('/', async (req, res) => {
-  const v = { name: clean(req.body.name, 100), title: clean(req.body.title, 100), description: clean(req.body.description, 500), address: clean(req.body.address, 300), phone: clean(req.body.phone, 40) };
+  const v = { name: clean(req.body.name, 150), name_bn: clean(req.body.name_bn, 150), short_name: clean(req.body.short_name, 60), title: clean(req.body.title, 100), description: clean(req.body.description, 500), address: clean(req.body.address, 300), phone: clean(req.body.phone, 40) };
   const errors = [];
   if (v.name.length < 2) errors.push('Madrasa name must be at least 2 characters.');
   if (v.title.length < 2) errors.push('Website title must be at least 2 characters.');
   if (errors.length) return (await render(res, { errors, s: { ...row(), ...v } }));
-  (await db.prepare('UPDATE settings SET name=?,title=?,description=?,address=?,phone=? WHERE id=1').run(v.name, v.title, v.description, v.address, v.phone));
+  (await db.prepare('UPDATE settings SET name=?,name_bn=?,short_name=?,title=?,description=?,address=?,phone=? WHERE id=1').run(v.name, v.name_bn, v.short_name || v.name, v.title, v.description, v.address, v.phone));
   res.redirect('/admin/settings?ok=settings_saved');
 });
 

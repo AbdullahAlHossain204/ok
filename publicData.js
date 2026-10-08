@@ -53,4 +53,18 @@ const fundDto = (f) => ({ name: f.name, description: f.description || null, stat
 // Public funds: ACTIVE and COMPLETED only (CLOSED funds are hidden)
 const listFunds = async () => (await db.prepare(`${FUND_SQL} WHERE f.status IN ('ACTIVE','COMPLETED') ORDER BY f.status, f.name`).all()).map(fundDto);
 
-module.exports = { list, categories, listFunds, progress, FUND_SQL };
+// Public statistics: aggregate totals only (no donor-level data)
+const { monthly, summary } = require('./reportData');
+const { today } = require('./money');
+async function stats(yearIn) {
+  const cur = today().slice(0, 4);
+  const years = (await db.prepare("SELECT DISTINCT substr(date,1,4) y FROM transactions WHERE status='COMPLETED' ORDER BY y DESC").all()).map((r) => r.y);
+  if (!years.includes(cur)) years.unshift(cur);
+  years.sort().reverse();
+  const year = years.includes(String(yearIn)) ? String(yearIn) : cur;
+  const by = async (type) => (await db.prepare(`SELECT c.name, SUM(t.amount) total FROM transactions t JOIN categories c ON c.id=t.category_id
+    WHERE t.status='COMPLETED' AND t.type=? AND t.date>=? AND t.date<=? GROUP BY c.id ORDER BY total DESC`).all(type, `${year}-01-01`, `${year}-12-31`));
+  return { year, years, monthly: (await monthly(year)), totals: (await summary(`${year}-01-01`, `${year}-12-31`)), income: (await by('CREDIT')), expense: (await by('DEBIT')) };
+}
+
+module.exports = { list, categories, listFunds, progress, FUND_SQL, stats };

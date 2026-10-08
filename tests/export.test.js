@@ -12,13 +12,13 @@ const site = { name: 'Test Madrasa', name_bn: 'টেস্ট মাদ্র�
 let server, base; const jar = {};
 
 test.before(async () => {
-  db.prepare('INSERT INTO admins(email,password_hash) VALUES(?,?)').run('e@t.com', bcrypt.hashSync('GoodPass123', 4));
-  db.exec("INSERT INTO donors(name,phone) VALUES('Md. Rahim','8801712345678'),('মোঃ করিম','8801812345678')");
+  (await db.prepare('INSERT INTO admins(email,password_hash) VALUES(?,?)').run('e@t.com', bcrypt.hashSync('GoodPass123', 4)));
+  await db.exec("INSERT INTO donors(name,phone) VALUES('Md. Rahim','8801712345678'),('মোঃ করিম','8801812345678')");
   const ins = db.prepare('INSERT INTO transactions(txn_id,type,amount,date,category_id,donor_id,purpose,description,payment_method,status,name_visibility) VALUES(?,?,?,?,?,?,?,?,?,?,?)');
-  const c = (amt, date, donor, st = 'COMPLETED') => ins.run(nextTxnId('CREDIT', +date.slice(0, 4)), 'CREDIT', amt, date, 2, donor, 'Building', null, 'Cash', st, 'PRIVATE');
-  const d = (amt, date, st = 'COMPLETED') => ins.run(nextTxnId('DEBIT', +date.slice(0, 4)), 'DEBIT', amt, date, 8, null, 'Electricity', 'bill', 'Cash', st, null);
-  c(1000000, '2026-09-26', 1); c(500000, '2026-10-02', 2); c(2500050, '2026-10-03', 1); c(99900, '2026-10-04', 1, 'PENDING');
-  d(350000, '2026-10-06'); d(111100, '2026-10-07', 'CANCELLED'); c(750000, '2025-12-31', 2); d(120000, '2025-12-30');
+  const c = async (amt, date, donor, st = 'COMPLETED') => ins.run((await nextTxnId('CREDIT', +date.slice(0, 4))), 'CREDIT', amt, date, 2, donor, 'Building', null, 'Cash', st, 'PRIVATE');
+  const d = async (amt, date, st = 'COMPLETED') => ins.run((await nextTxnId('DEBIT', +date.slice(0, 4))), 'DEBIT', amt, date, 8, null, 'Electricity', 'bill', 'Cash', st, null);
+  await c(1000000, '2026-09-26', 1); await c(500000, '2026-10-02', 2); await c(2500050, '2026-10-03', 1); await c(99900, '2026-10-04', 1, 'PENDING');
+  await d(350000, '2026-10-06'); await d(111100, '2026-10-07', 'CANCELLED'); await c(750000, '2025-12-31', 2); await d(120000, '2025-12-30');
   await new Promise((r) => { server = app.listen(0, r); }); base = 'http://localhost:' + server.address().port;
 });
 test.after(() => { server.close(); try { db.close(); } catch {} for (const s of ['', '-wal', '-shm']) fs.rmSync(file + s, { force: true }); });
@@ -31,8 +31,8 @@ const send = async (method, p, body) => {
   return r;
 };
 
-test('totals use only COMPLETED, in exact poisha; weeks run Saturday to Friday; gaps are zero-filled', () => {
-  const d = loadExport(exportRange({}));
+test('totals use only COMPLETED, in exact poisha; weeks run Saturday to Friday; gaps are zero-filled', async () => {
+  const d = (await loadExport((await exportRange({}))));
   assert.deepEqual([d.totals.credit, d.totals.debit, d.totals.net, d.totals.donations, d.totals.expenses], [4750050, 470000, 4280050, 4, 2]);
   assert.equal(d.rows.length, 8);                                   // pending + cancelled are listed...
   assert.equal(d.months.length, 11); assert.equal(d.months[1].credit, 0); // Dec 2025 .. Oct 2026, empty months included
@@ -43,16 +43,16 @@ test('totals use only COMPLETED, in exact poisha; weeks run Saturday to Friday; 
   assert.equal(d.months.reduce((s, m) => s + m.credit, 0), d.totals.credit); assert.equal(d.weeks.reduce((s, x) => s + x.debit, 0), d.totals.debit);
 });
 
-test('export ranges', () => {
-  assert.equal(exportRange({ range: 'custom', from: '2026-10-01', to: '2026-10-31' }).title, 'Custom range');
-  assert.equal(exportRange({ range: 'custom', from: 'bad', to: '2026-10-31' }).title, 'All history'); // invalid -> safe default
-  assert.equal(exportRange({ range: 'custom', from: '2026-12-01', to: '2026-01-01' }).title, 'All history');
-  const d = loadExport(exportRange({ range: 'custom', from: '2026-10-01', to: '2026-10-31' }));
+test('export ranges', async () => {
+  assert.equal((await exportRange({ range: 'custom', from: '2026-10-01', to: '2026-10-31' })).title, 'Custom range');
+  assert.equal((await exportRange({ range: 'custom', from: 'bad', to: '2026-10-31' })).title, 'All history'); // invalid -> safe default
+  assert.equal((await exportRange({ range: 'custom', from: '2026-12-01', to: '2026-01-01' })).title, 'All history');
+  const d = (await loadExport((await exportRange({ range: 'custom', from: '2026-10-01', to: '2026-10-31' }))));
   assert.deepEqual([d.totals.credit, d.totals.debit], [3000050, 350000]);
 });
 
 test('Excel file: sheets, live formulas, text phones, Bengali preserved', async () => {
-  const buf = await buildXlsx(loadExport(exportRange({})), site);
+  const buf = await buildXlsx((await loadExport((await exportRange({})))), site);
   const wb = new ExcelJS.Workbook(); await wb.xlsx.load(buf);
   assert.deepEqual(wb.worksheets.map((w) => w.name), ['Summary', 'Monthly', 'Weekly', 'Transactions']);
   const s = wb.getWorksheet('Summary');
@@ -71,7 +71,7 @@ test('Excel file: sheets, live formulas, text phones, Bengali preserved', async 
 });
 
 test('PDF file is a valid PDF with the report in it', async () => {
-  const buf = await buildPdf(loadExport(exportRange({})), site);
+  const buf = await buildPdf((await loadExport((await exportRange({})))), site);
   assert.equal(buf.slice(0, 5).toString(), '%PDF-'); assert.ok(buf.length > 5000); assert.ok(buf.slice(-1024).toString('latin1').includes('%%EOF'));
 });
 

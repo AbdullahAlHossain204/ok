@@ -6,10 +6,10 @@ The app stores its data in **Turso** (free hosted SQLite) when `TURSO_DATABASE_U
 Without those settings it uses the local file `madrasa.db`, exactly as before.
 
 Render settings: Build Command `npm install`, Start Command `npm start`.
-Environment variables: `NODE_ENV=production`, `SESSION_SECRET` (long random), `TRUST_PROXY=1`, `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`.
+Environment variables: `NODE_ENV=production`, `NODE_VERSION=22`, `SESSION_SECRET` (long random), `TRUST_PROXY=1`, `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`.
 
+- `npm run migrate` copies an existing local `madrasa.db` into Turso (one time, run it BEFORE `npm run seed`). Your local file is never changed.
 - `npm run seed` creates (or resets) the admin login in whichever database is configured.
-- `npm run migrate` copies an existing local `madrasa.db` into Turso (one time).
 - `npm run backup` saves all data to `backups/madrasa-DATE.json`. Do this regularly and keep the file somewhere safe.
 
 
@@ -22,6 +22,18 @@ and private donor names hidden. Includes a secure admin panel.
 3. Copy `.env.example` to `.env` (Windows: `copy .env.example .env`) and fill in ADMIN_EMAIL, ADMIN_PASSWORD, SESSION_SECRET
 4. Create your admin account:  `npm run seed`
 5. Start:  `npm start`  then open http://localhost:3000  (admin: http://localhost:3000/admin/login)
+
+## Branding
+The Madrasa name (English and Bengali), short name, address, phone, description and logo are all editable in Admin → Settings.
+The colours are the first lines of `public/style.css` (`--green`, `--gold`). The footer credit "Website powered by AJ Limited" is in `views/partials/footer.ejs`.
+
+## Downloads (admin only)
+Admin → Reports → Download: choose All history / This month / This year / a custom range, then **Excel** or **PDF**.
+- Excel: Summary, Monthly, Weekly and Transactions sheets. Totals and nets are live formulas. Includes donor names and phones.
+- PDF: summary, monthly and weekly tables and the transaction list (the latest 3000 if there are more; Excel always has everything).
+- Only COMPLETED transactions are counted in totals; pending and cancelled ones are listed and labelled. Weeks run Saturday to Friday.
+- These files contain private donor information. They can only be downloaded while logged in as admin.
+- The PDF uses the bundled Noto Sans Bengali font (`fonts/`, SIL Open Font License) so Bengali names print correctly.
 
 ## Everyday commands
 - `npm test`        runs all automated tests (privacy, totals, reports, the 8 final scenarios)

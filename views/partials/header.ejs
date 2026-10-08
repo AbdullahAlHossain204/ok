@@ -1,6 +1,17 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title><%= page %> | <%= site.title %></title><% const d = typeof desc !== 'undefined' ? desc : site.description; %><meta name="description" content="<%= d %>">
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title><%= page %> | <%= site.title %></title>
+<% const d = typeof desc !== 'undefined' ? desc : site.description; %><meta name="description" content="<%= d %>">
 <meta property="og:type" content="website"><meta property="og:site_name" content="<%= site.name %>"><meta property="og:title" content="<%= page %> | <%= site.title %>"><meta property="og:description" content="<%= d %>"><meta name="theme-color" content="#0b4d3a">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='24' fill='%230b4d3a'/%3E%3Ccircle cx='21' cy='24' r='12' fill='%23c9a227'/%3E%3Ccircle cx='26' cy='22' r='10.5' fill='%230b4d3a'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/style.css"></head><body>
-<header class="top"><div class="wrap bar"><a class="brand" href="/"><% if (site.logo_v) { %><img class="logo" src="/logo?v=<%= site.logo_v %>" alt=""><% } %><%= site.name %></a>
-<nav aria-label="Main"><% [['/','Home'],['/donations','Donations'],['/expenses','Expenses'],['/transactions','Transactions'],['/funds','Funds'],['/about','About']].forEach(l=>{ %><a href="<%= l[0] %>" <%- path===l[0]?'aria-current="page"':'' %>><%= l[1] %></a><% }) %></nav></div></header><main class="wrap">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-head">
+<% if (site.address || site.phone) { %><div class="topstrip"><div class="wrap"><% if (site.address) { %><span>📍 <%= site.address %></span><% } %><% if (site.phone) { %><span>☎ <%= site.phone %></span><% } %></div></div><% } %>
+<div class="wrap bar2"><a class="brand2" href="/"><%- include('emblem') %><span class="bt"><strong><%= site.short_name || site.name %></strong><% if (site.name_bn) { %><small lang="bn"><%= site.name_bn %></small><% } %></span></a>
+<nav aria-label="Main"><% [['/','Home'],['/donations','Donations'],['/expenses','Expenses'],['/transactions','Transactions'],['/stats','Statistics'],['/funds','Funds'],['/about','About']].forEach(l=>{ %><a href="<%= l[0] %>" <%- path===l[0]?'aria-current="page"':'' %>><%= l[1] %></a><% }) %></nav></div></header>
+<% if (typeof hero !== 'undefined' && hero) { %><section class="hero"><div class="wrap">
+<h1><%= site.name %></h1><% if (site.name_bn) { %><p class="bn" lang="bn"><%= site.name_bn %></p><% } %>
+<p class="tag">Every taka collected and every taka spent — shown openly for everyone.</p>
+<p class="cta"><a class="btn small" href="/donations">View Donations</a> <a class="btn small ghost" href="/transactions">Transaction History</a> <a class="btn small ghost" href="/stats">Statistics</a></p></div></section><% } %>
+<main id="main" class="wrap">

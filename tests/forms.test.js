@@ -16,8 +16,8 @@ const send = async (method, p, body) => {
   return { status: r.status, text: await r.text(), loc: r.headers.get('location') };
 };
 test.before(async () => {
-  db.prepare('INSERT INTO admins(email,password_hash) VALUES(?,?)').run('f@t.com', bcrypt.hashSync('GoodPass123', 4));
-  db.exec("INSERT INTO funds(name,target,status) VALUES('Building Fund',100000,'ACTIVE')");
+  (await db.prepare('INSERT INTO admins(email,password_hash) VALUES(?,?)').run('f@t.com', bcrypt.hashSync('GoodPass123', 4)));
+  await db.exec("INSERT INTO funds(name,target,status) VALUES('Building Fund',100000,'ACTIVE')");
   await new Promise((r) => { server = app.listen(0, r); }); base = 'http://localhost:' + server.address().port;
   const t = (await send('GET', '/admin/login')).text.match(/name="_csrf" value="([^"]+)"/)[1];
   assert.equal((await send('POST', '/admin/login', { _csrf: t, email: 'f@t.com', password: 'GoodPass123' })).status, 302);

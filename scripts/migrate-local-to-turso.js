@@ -15,6 +15,10 @@ const ORDER = ['settings', 'categories', 'funds', 'donors', 'transactions', 'cou
   for (const t of ORDER) {
     let rows; try { rows = local.prepare(`SELECT * FROM ${t}`).all(); } catch { console.log(t + ': (no such table, skipped)'); continue; }
     if (!rows.length) { console.log(t + ': 0 rows'); continue; }
+    // Add any column that exists locally but not (yet) in Turso, so no data is ever dropped
+    const have = (await client.execute(`PRAGMA table_info(${t})`)).rows.map((r) => r[1]);
+    for (const c of local.prepare(`PRAGMA table_info(${t})`).all())
+      if (!have.includes(c.name)) { await client.execute(`ALTER TABLE ${t} ADD COLUMN ${c.name} ${c.type || 'TEXT'}`); console.log('  added missing column ' + t + '.' + c.name); }
     const cols = Object.keys(rows[0]);
     const sql = `INSERT OR REPLACE INTO ${t}(${cols.join(',')}) VALUES(${cols.map(() => '?').join(',')})`;
     for (let i = 0; i < rows.length; i += 50)

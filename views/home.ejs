@@ -1,10 +1,10 @@
 <%- include('partials/header') %>
-<h1>Financial Transparency</h1><p class="muted">Every taka collected and spent, shown openly.</p>
 <section class="cards">
 <div class="card"><span>Total Collection</span><strong><%= taka(t.credit) %></strong></div>
 <div class="card"><span>Total Expense</span><strong><%= taka(t.debit) %></strong></div>
 <div class="card gold"><span>Current Balance</span><strong><%= taka(t.balance) %></strong></div>
 <div class="card"><span>Total Donations</span><strong><%= t.donations %></strong></div></section>
+<h2>Monthly Collection, <%= year %> <a class="more" href="/stats">More statistics →</a></h2><div class="card"><%- chart %></div>
 <div class="two">
 <section><h2>Recent Donations</h2><% if (!donations.length) { %><p class="empty">No donations found.</p><% } else { %><ul class="recent"><% donations.forEach(r => { %><li><span><%= r.displayName %><small><%= fmtDate(r.date) %></small></span><strong><%= taka(r.amount) %></strong></li><% }) %></ul><a href="/donations">All donations →</a><% } %></section>
 <section><h2>Recent Expenses</h2><% if (!expenses.length) { %><p class="empty">No expenses found.</p><% } else { %><ul class="recent"><% expenses.forEach(r => { %><li><span><%= r.description || r.category %><small><%= fmtDate(r.date) %></small></span><strong><%= taka(r.amount) %></strong></li><% }) %></ul><a href="/expenses">All expenses →</a><% } %></section></div>

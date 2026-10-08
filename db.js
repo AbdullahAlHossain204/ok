@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS donors (id INTEGER PRIMARY KEY, name TEXT NOT NULL, p
 CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY, name TEXT NOT NULL, type TEXT NOT NULL CHECK(type IN ('INCOME','EXPENSE')), UNIQUE(name,type));
 CREATE TABLE IF NOT EXISTS funds (id INTEGER PRIMARY KEY, name TEXT NOT NULL, description TEXT, target INTEGER DEFAULT 0, start_date TEXT, end_date TEXT, status TEXT DEFAULT 'ACTIVE');
 CREATE TABLE IF NOT EXISTS counters (prefix TEXT, year INTEGER, last INTEGER DEFAULT 0, PRIMARY KEY(prefix,year));
-CREATE TABLE IF NOT EXISTS settings (id INTEGER PRIMARY KEY CHECK(id=1), name TEXT, address TEXT, phone TEXT, description TEXT, title TEXT, logo BLOB, logo_type TEXT, logo_v INTEGER);
+CREATE TABLE IF NOT EXISTS settings (id INTEGER PRIMARY KEY CHECK(id=1), name TEXT, address TEXT, phone TEXT, description TEXT, title TEXT, logo BLOB, logo_type TEXT, logo_v INTEGER, name_bn TEXT, short_name TEXT);
 INSERT OR IGNORE INTO settings (id,name,description,title) VALUES (1,'Madrasa','Transparent fund management','Madrasa Fund');
 CREATE TABLE IF NOT EXISTS transactions (
   id INTEGER PRIMARY KEY, txn_id TEXT UNIQUE NOT NULL,
@@ -68,8 +68,13 @@ async function init() {
   await client.executeMultiple(SCHEMA);
   // Older databases: add the logo columns if they are missing
   const cols = (await client.execute('PRAGMA table_info(settings)')).rows.map((r) => r[1]);
-  for (const [c, t] of [['logo', 'BLOB'], ['logo_type', 'TEXT'], ['logo_v', 'INTEGER']])
+  for (const [c, t] of [['logo', 'BLOB'], ['logo_type', 'TEXT'], ['logo_v', 'INTEGER'], ['name_bn', 'TEXT'], ['short_name', 'TEXT']])
     if (!cols.includes(c)) await client.execute(`ALTER TABLE settings ADD COLUMN ${c} ${t}`);
+  // First-time branding (only while the name is still the default 'Madrasa')
+  await client.execute({ sql: "UPDATE settings SET name=?, name_bn=?, short_name=?, title=?, description=? WHERE id=1 AND name='Madrasa'", args: [
+    'Afsharia Darul Ulum Nurani Hafizia Madrasha & Orphanage', 'আফছারিয়া দারুল উলুম নুরানী হাফিজিয়া এতিমখানা', 'Afsharia Madrasa',
+    'Afsharia Madrasha Fund Transparency',
+    'A madrasa and orphanage providing Nurani and Hifz education and care for orphans. This website shows every donation received and every expense paid, openly.'] });
   const cats = [['General', 'INCOME'], ['Building', 'INCOME'], ['Student Support', 'INCOME'], ['Food', 'INCOME'], ['Education', 'INCOME'], ['Zakat', 'INCOME'], ['Sadaqah', 'INCOME'],
     ['Electricity', 'EXPENSE'], ['Salary', 'EXPENSE'], ['Food', 'EXPENSE'], ['Maintenance', 'EXPENSE'], ['Books', 'EXPENSE'], ['Other', 'EXPENSE']];
   await client.batch(cats.map(([name, type]) => ({ sql: 'INSERT OR IGNORE INTO categories(name,type) VALUES(?,?)', args: [name, type] })), 'write');
