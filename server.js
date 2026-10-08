@@ -39,6 +39,7 @@ app.use(auth.loadAdmin);
 
 // Public logo image (stored in the database; only PNG/JPEG/WebP are ever accepted)
 app.get('/logo', (req, res) => {
+  const r = db.prepare('SELECT logo, logo_type FROM settings WHERE id=1').get();
   if (!r || !r.logo) return res.status(404).end();
   res.set({ 'Content-Type': r.logo_type, 'Cache-Control': 'public, max-age=86400' }).end(Buffer.from(r.logo));
 });
@@ -100,10 +101,7 @@ if (require.main === module) {
 import { createClient } from "@libsql/client";
 // OR if using CommonJS: const { createClient } = require("@libsql/client");
 
- db = createClient({
-  url: process.env.TURSO_DATABASE_URL,
-  authToken: process.env.TURSO_AUTH_TOKEN,
-});
+
 
 // Example query format for the rest of your routes:
 // const result = await db.execute("SELECT * FROM donations");
