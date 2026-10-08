@@ -1,7 +1,9 @@
-require('dotenv').config();
+//  New ES Module syntax
+import 'dotenv/config';
 const express = require('express');
 const path = require('path');
-const { db, totals } = require('./db');
+//  New ES Module syntax
+import { db, totals } from './db.js';
 const { list } = require('./publicData');
 const { monthly } = require('./reportData');
 const { bars } = require('./charts');
