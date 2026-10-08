@@ -25,9 +25,8 @@ test.before(async () => {
 test.after(() => { server.close(); try { db.close(); } catch {} for (const s of ['', '-wal', '-shm']) fs.rmSync(file + s, { force: true }); });
 
 const get = async (p) => { const r = await fetch(base + p); return { status: r.status, text: await r.text() }; };
-const URLS = ['/', '/donations', '/expenses', '/transactions', '/about', '/api/public/transactions', '/api/public/summary',
-  '/funds', '/api/public/funds', '/stats', '/stats?year=2026', '/api/public/stats', '/donations?q=SecretKarim', '/donations?q=01812345678', '/donations?q=8801812', '/transactions?q=Karim', '/api/public/transactions?q=SecretKarim',
-  '/api/public/transactions?q=0171', '/transactions?type=CREDIT&page=1', '/expenses?q=bill'];
+const URLS = ['/', '/donations', '/about', '/api/public/summary', '/funds', '/api/public/funds', '/donations?q=SecretKarim', '/donations?q=01812345678', '/donations?q=8801812',
+  '/donations?page=1'];
 
 test('no public page or API leaks private data', async () => {
   for (const u of URLS) {
@@ -43,22 +42,23 @@ test('public donor shows name, private shows Anonymous Donor', async () => {
   const { text } = await get('/donations');
   assert.ok(text.includes('Md. Rahim') && text.includes('৳10,000'));
   assert.ok(text.includes('Anonymous Donor') && text.includes('৳5,000'));
-  const api = JSON.parse((await get('/api/public/transactions')).text);
-  assert.deepEqual(Object.keys(api.items[0]).sort(), ['amount', 'category', 'date', 'description', 'displayName', 'transactionId', 'type']);
 });
 
 test('searching a private name or phone finds nothing', async () => {
   for (const q of ['SecretKarim', '01812345678', '8801812345678', '01712345678']) {
-    const api = JSON.parse((await get('/api/public/transactions?q=' + q)).text);
-    assert.equal(api.total, 0, q);
+    const { text } = await get('/donations?q=' + q);
+    assert.ok(text.includes('No donations found.'), q);
   }
 });
 
-test('only COMPLETED transactions are public; totals are right', async () => {
-  const api = JSON.parse((await get('/api/public/transactions')).text);
-  assert.equal(api.total, 3); // pending one hidden
+test('only COMPLETED donations are public; expenses are not public at all', async () => {
+  const { text } = await get('/donations');
+  assert.ok(text.includes('2 record(s)') && !text.includes('Hidden')); // pending one hidden
   const s = JSON.parse((await get('/api/public/summary')).text);
-  assert.deepEqual([s.totalCollection, s.totalExpense, s.balance, s.donationCount], [1500000, 350000, 1150000, 2]);
+  assert.deepEqual(s, { totalCollection: 1500000, donationCount: 2, currency: 'BDT', unit: 'poisha' });
+  for (const u of ['/expenses', '/transactions', '/stats', '/api/public/transactions', '/api/public/stats']) assert.equal((await get(u)).status, 404, u);
+  const home = (await get('/')).text;
+  assert.ok(!home.includes('Recent Expenses') && !home.includes('Total Expense') && !home.includes('September bill') && !home.includes('Electricity'));
 });
 
 test('admin pages and admin-only data are protected', async () => {

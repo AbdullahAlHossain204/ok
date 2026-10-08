@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 require('express-async-errors'); // lets async route handlers report errors to Express (Express 4)
 const path = require('path');
+const fs = require('fs');
 const { db, totals } = require('./db');
 const { list } = require('./publicData');
 const { monthly } = require('./reportData');
@@ -23,6 +24,8 @@ app.use(async (req, res, next) => {
   res.locals.taka = taka;
   res.locals.fmtDate = fmtDate;
   res.locals.site = (await db.prepare('SELECT id,name,name_bn,short_name,address,phone,description,title,logo_v FROM settings WHERE id=1').get());
+  // Logo shown in the public header, hero, footer and About page: public/logo.png if present, else the one uploaded in Settings
+  res.locals.site.logo_url = fs.existsSync(path.join(__dirname, 'public', 'logo.png')) ? '/logo.png' : (res.locals.site.logo_v ? '/logo?v=' + res.locals.site.logo_v : null);
   res.locals.path = req.path;
   // WhatsApp link for a COMPLETED donation (null if not available or phone invalid)
   res.locals.waLink = (t) => (t.status === 'COMPLETED' ? donationLink(t, res.locals.site.short_name || res.locals.site.name) : null);
@@ -46,7 +49,7 @@ app.get('/logo', async (req, res) => {
 // ---------- Public ----------
 app.get('/', async (req, res) => res.render('home', { t: (await totals()), page: 'Home', hero: true, year: today().slice(0, 4),
   chart: bars([{ name: 'Collection', color: '#0b4d3a', values: (await monthly(today().slice(0, 4))).credit }], 'Monthly collection this year'),
-  donations: (await list({ kind: 'donations', per: 5 })).rows, expenses: (await list({ kind: 'expenses', per: 5 })).rows }));
+  donations: (await list({ kind: 'donations', per: 5 })).rows }));
 app.use(require('./routes/public'));
 
 // ---------- Admin login / logout ----------

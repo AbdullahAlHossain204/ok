@@ -72,9 +72,12 @@ async function init() {
     if (!cols.includes(c)) await client.execute(`ALTER TABLE settings ADD COLUMN ${c} ${t}`);
   // First-time branding (only while the name is still the default 'Madrasa')
   await client.execute({ sql: "UPDATE settings SET name=?, name_bn=?, short_name=?, title=?, description=? WHERE id=1 AND name='Madrasa'", args: [
-    'Afsharia Darul Ulum Nurani Hafizia Madrasha & Orphanage', 'আফছারিয়া দারুল উলুম নুরানী হাফিজিয়া এতিমখানা', 'Afsharia Madrasa',
-    'Afsharia Madrasha Fund Transparency',
-    'A madrasa and orphanage providing Nurani and Hifz education and care for orphans. This website shows every donation received and every expense paid, openly.'] });
+    'FULTALA AFCHARIA DARUL ULOOM HAFEZIA MADRASHA AND ORPHANAGE', 'ফুলতলা আফছারিয়া দারূল উলূম হাফেজিয়া মাদ্রাসা ও এতিমখানা', 'FULTALA AFCHARIA DARUL ULOOM HAFEZIA MADRASHA AND ORPHANAGE',
+    'FULTALA AFCHARIA DARUL ULOOM HAFEZIA MADRASHA AND ORPHANAGE',
+    'A madrasa and orphanage providing Nurani and Hifz education and care for orphans. This website shows every donation received, openly.'] });
+  // One-time rename of the previous names to the official name (stays editable in Admin -> Settings afterwards)
+  await client.execute({ sql: "UPDATE settings SET name=?, name_bn=?, short_name=?, title=? WHERE id=1 AND name IN ('Afsharia Darul Ulum Nurani Hafizia Madrasha & Orphanage','Afsharia Madrasha','Afsharia Madrasa')", args: [
+    'FULTALA AFCHARIA DARUL ULOOM HAFEZIA MADRASHA AND ORPHANAGE', 'ফুলতলা আফছারিয়া দারূল উলূম হাফেজিয়া মাদ্রাসা ও এতিমখানা', 'FULTALA AFCHARIA DARUL ULOOM HAFEZIA MADRASHA AND ORPHANAGE', 'FULTALA AFCHARIA DARUL ULOOM HAFEZIA MADRASHA AND ORPHANAGE'] });
   const cats = [['General', 'INCOME'], ['Building', 'INCOME'], ['Student Support', 'INCOME'], ['Food', 'INCOME'], ['Education', 'INCOME'], ['Zakat', 'INCOME'], ['Sadaqah', 'INCOME'],
     ['Electricity', 'EXPENSE'], ['Salary', 'EXPENSE'], ['Food', 'EXPENSE'], ['Maintenance', 'EXPENSE'], ['Books', 'EXPENSE'], ['Other', 'EXPENSE']];
   await client.batch(cats.map(([name, type]) => ({ sql: 'INSERT OR IGNORE INTO categories(name,type) VALUES(?,?)', args: [name, type] })), 'write');
