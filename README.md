@@ -34,17 +34,23 @@ Admin → Reports → Download: choose All history / This month / This year / a 
 - `npm run seed`    creates the admin, or resets the admin password to the value in `.env`
 
 ## Where is my data?
-Everything (donations, expenses, settings, the logo) is in ONE file: `madrasa.db`. Back it up regularly with `npm run backup`
-and keep copies off this computer (USB drive or cloud storage).
+- **On your computer:** in one file, `madrasa.db`. Back it up with `npm run backup`.
+- **On the live site:** in your **Turso** database. Set `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` and the app uses it automatically.
+  Never run the live site without them: Render's disk is wiped on every deploy, so a local file would start empty each time.
+- Back up Turso with:  `turso db shell YOUR-DB-NAME .dump > backup.sql`
+
+## Going live on Render with Turso
+1. Push this folder to GitHub and connect it to a Render Web Service (build `npm install`, start `npm start`).
+2. In Render → Environment set: `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `SESSION_SECRET` (20+ random characters), `NODE_ENV=production`, `TRUST_PROXY=1`, `TZ_OFFSET_HOURS=6`, and `NODE_VERSION=22`.
+3. First start only ADDS missing tables/columns. It never deletes or rewrites your records, and it refuses to run against a database with an unexpected structure.
+4. If your Turso database already has an admin, log in with that admin. If you forgot the password, put the same Turso values in a local `.env` plus a new `ADMIN_EMAIL`/`ADMIN_PASSWORD` and run `npm run seed`.
+   If the database has no admin at all, one is created automatically from `ADMIN_EMAIL` and `ADMIN_PASSWORD` on first start.
+5. Tip: pick the Render region nearest your Turso region. Every save is a round trip to Turso, so a nearby region is noticeably faster.
 
 ## Going live checklist
-1. Host it on a server/VPS or a host with a PERSISTENT DISK (the database is a file; hosts that erase files on restart will lose data).
-2. Serve it over HTTPS only (most hosts and Caddy/Nginx/Cloudflare can do this for you).
-3. In `.env` set `NODE_ENV=production`, a long random `SESSION_SECRET` (20+ characters), and `TRUST_PROXY=1` if the host puts a proxy in front.
-   In production the app refuses to start without a proper SESSION_SECRET.
-4. Use a strong admin password, then run `npm run seed`.
-5. Schedule `npm run backup` daily and copy the backups somewhere safe.
-6. After any code change, run `npm test` before publishing.
+1. HTTPS only (Render does this for you).
+2. A strong, long admin password and a long random `SESSION_SECRET`. Never share the Turso token or these values.
+3. Run `npm test` before publishing changes.
 
 ## Privacy design
 - Every public query lives in `publicData.js`. It picks the display name inside the database query (real name only when PUBLIC, otherwise

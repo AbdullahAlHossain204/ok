@@ -11,22 +11,22 @@ const weekStart = (d) => { const t = ms(d); return isoDay(t - ((new Date(t).getU
 const lastDay = (ym) => { const [y, m] = ym.split('-').map(Number); return `${ym}-${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0')}`; };
 const nowText = () => new Date(Date.now() + OFFSET).toISOString().replace('T', ' ').slice(0, 16);
 
-function exportRange(q = {}) {
+async function exportRange(q = {}) {
   const t = today();
   let from, to, title;
   if (q.range === 'month') { from = t.slice(0, 7) + '-01'; to = lastDay(t.slice(0, 7)); title = 'This month'; }
   else if (q.range === 'year') { from = t.slice(0, 4) + '-01-01'; to = t.slice(0, 4) + '-12-31'; title = 'This year'; }
   else if (q.range === 'custom' && validDate(q.from) && validDate(q.to) && q.from <= q.to) { from = q.from; to = q.to; title = 'Custom range'; }
   else {
-    const r = db.prepare('SELECT MIN(date) a, MAX(date) b FROM transactions').get();
+    const r = await db.prepare('SELECT MIN(date) a, MAX(date) b FROM transactions').get();
     from = r.a || t; to = r.b || t; title = 'All history';
   }
   return { from, to, label: `${title} (${fmtDate(from)} – ${fmtDate(to)})`, title };
 }
 
 // All amounts stay in integer poisha until the very end.
-function loadExport(range) {
-  const rows = db.prepare(`SELECT t.txn_id, t.type, t.date, t.amount, t.status, t.purpose, t.description, t.payment_method, t.name_visibility, t.note,
+async function loadExport(range) {
+  const rows = await db.prepare(`SELECT t.txn_id, t.type, t.date, t.amount, t.status, t.purpose, t.description, t.payment_method, t.name_visibility, t.note,
       d.name donor_name, d.phone, c.name category, f.name fund
     FROM transactions t LEFT JOIN donors d ON d.id=t.donor_id LEFT JOIN categories c ON c.id=t.category_id LEFT JOIN funds f ON f.id=t.fund_id
     WHERE t.date>=? AND t.date<=? ORDER BY t.date ASC, t.id ASC`).all(range.from, range.to);

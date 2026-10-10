@@ -7,13 +7,14 @@ const { db, nextTxnId } = require('../db');
 const app = require('../server');
 let server, base;
 test.before(async () => {
-  db.exec("INSERT INTO donors(name,phone) VALUES('SecretKarim','8801812345678')");
+  await db.ready;
+  await db.exec("INSERT INTO donors(name,phone) VALUES('SecretKarim','8801812345678')");
   const c = db.prepare("INSERT INTO transactions(txn_id,type,amount,date,category_id,donor_id,name_visibility,status) VALUES(?,'CREDIT',?,?,?,1,'PRIVATE',?)");
   const d = db.prepare("INSERT INTO transactions(txn_id,type,amount,date,category_id,status,purpose,description) VALUES(?,'DEBIT',?,?,?,?,'Secret reason','Secret expense detail')");
-  c.run(nextTxnId('CREDIT', 2025), 1000000, '2025-03-05', 2, 'COMPLETED'); c.run(nextTxnId('CREDIT', 2025), 500000, '2025-03-28', 2, 'COMPLETED');
-  c.run(nextTxnId('CREDIT', 2025), 700000, '2025-07-01', 1, 'COMPLETED'); c.run(nextTxnId('CREDIT', 2025), 999999, '2025-03-10', 2, 'PENDING'); // pending: ignored
-  c.run(nextTxnId('CREDIT', 2024), 300000, '2024-12-31', 1, 'COMPLETED');                                                                        // other year
-  d.run(nextTxnId('DEBIT', 2025), 350000, '2025-03-06', 8, 'COMPLETED'); d.run(nextTxnId('DEBIT', 2025), 111111, '2025-03-07', 8, 'CANCELLED');
+  await c.run(await nextTxnId('CREDIT', 2025), 1000000, '2025-03-05', 2, 'COMPLETED'); await c.run(await nextTxnId('CREDIT', 2025), 500000, '2025-03-28', 2, 'COMPLETED');
+  await c.run(await nextTxnId('CREDIT', 2025), 700000, '2025-07-01', 1, 'COMPLETED'); await c.run(await nextTxnId('CREDIT', 2025), 999999, '2025-03-10', 2, 'PENDING'); // pending: ignored
+  await c.run(await nextTxnId('CREDIT', 2024), 300000, '2024-12-31', 1, 'COMPLETED');                                                                        // other year
+  await d.run(await nextTxnId('DEBIT', 2025), 350000, '2025-03-06', 8, 'COMPLETED'); await d.run(await nextTxnId('DEBIT', 2025), 111111, '2025-03-07', 8, 'CANCELLED');
   await new Promise((r) => { server = app.listen(0, r); }); base = 'http://localhost:' + server.address().port;
 });
 test.after(() => { server.close(); try { db.close(); } catch {} for (const s of ['', '-wal', '-shm']) fs.rmSync(file + s, { force: true }); });
@@ -41,8 +42,8 @@ test('stats page renders, bad years are safe, and nothing private leaks', async 
 });
 
 test('who donated each month: names only if public, amounts per month, spending as an amount only', async () => {
-  db.exec("INSERT INTO donors(name,phone) VALUES('Md. Rahim','8801712345678')");
-  db.prepare("INSERT INTO transactions(txn_id,type,amount,date,category_id,donor_id,name_visibility,status) VALUES(?,'CREDIT',?,?,2,2,'PUBLIC','COMPLETED')").run(nextTxnId('CREDIT', 2025), 250000, '2025-03-15');
+  await db.exec("INSERT INTO donors(name,phone) VALUES('Md. Rahim','8801712345678')");
+  await db.prepare("INSERT INTO transactions(txn_id,type,amount,date,category_id,donor_id,name_visibility,status) VALUES(?,'CREDIT',?,?,2,2,'PUBLIC','COMPLETED')").run(await nextTxnId('CREDIT', 2025), 250000, '2025-03-15');
   const s = await (await fetch(base + '/api/public/stats?year=2025')).json();
   const march = s.months[2];
   assert.equal(march.collected, 1750000); assert.equal(march.spent, 350000);

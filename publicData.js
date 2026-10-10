@@ -9,7 +9,7 @@ const { validDate } = require('./money');
 
 const clean = (s, n = 100) => String(s || '').trim().slice(0, n);
 
-function list({ kind, type, q, from, to, category, page = 1, per = 20 }) {
+async function list({ kind, type, q, from, to, category, page = 1, per = 20 }) {
   const w = ["t.status='COMPLETED'"], a = [];
   const t = 'CREDIT'; // public pages list donations only; expense details are never public
   if (t) { w.push('t.type=?'); a.push(t); }
@@ -24,8 +24,8 @@ function list({ kind, type, q, from, to, category, page = 1, per = 20 }) {
   if (cat) { w.push('t.category_id=?'); a.push(cat); }
   const base = `FROM transactions t LEFT JOIN donors d ON d.id=t.donor_id LEFT JOIN categories c ON c.id=t.category_id WHERE ${w.join(' AND ')}`;
   page = Math.max(1, parseInt(page) || 1);
-  const total = db.prepare(`SELECT COUNT(*) n ${base}`).get(...a).n;
-  const rows = db.prepare(`SELECT t.txn_id, t.type, t.date, t.amount, c.name AS category,
+  const total = (await db.prepare(`SELECT COUNT(*) n ${base}`).get(...a)).n;
+  const rows = await db.prepare(`SELECT t.txn_id, t.type, t.date, t.amount, c.name AS category,
       CASE WHEN t.type='CREDIT' THEN (CASE WHEN t.name_visibility='PUBLIC' THEN d.name ELSE 'Anonymous Donor' END) END AS display_name,
       CASE WHEN t.type='CREDIT' THEN t.purpose ELSE COALESCE(NULLIF(t.description,''), t.purpose) END AS text
       ${base} ORDER BY t.date DESC, t.id DESC LIMIT ? OFFSET ?`).all(...a, per, (page - 1) * per);
@@ -38,9 +38,9 @@ function toPublic(r) {
            amount: r.amount, category: r.category || null, description: r.text || null };
 }
 
-const categories = (kind) => kind === 'transactions'
-  ? db.prepare("SELECT id, name || CASE type WHEN 'INCOME' THEN ' (Income)' ELSE ' (Expense)' END AS name FROM categories ORDER BY type, name").all()
-  : db.prepare('SELECT id, name FROM categories WHERE type=? ORDER BY name').all(kind === 'donations' ? 'INCOME' : 'EXPENSE');
+const categories = async (kind) => kind === 'transactions'
+  ? await db.prepare("SELECT id, name || CASE type WHEN 'INCOME' THEN ' (Income)' ELSE ' (Expense)' END AS name FROM categories ORDER BY type, name").all()
+  : await db.prepare('SELECT id, name FROM categories WHERE type=? ORDER BY name').all(kind === 'donations' ? 'INCOME' : 'EXPENSE');
 
 // Progress % with one decimal, using BigInt so large amounts stay exact. null when no target is set.
 const progress = (collected, target) => target > 0 ? Number(BigInt(collected) * 1000n / BigInt(target)) / 10 : null;
@@ -51,21 +51,21 @@ const FUND_SQL = `SELECT f.id, f.name, f.description, f.target, f.start_date, f.
 // Public statistics: aggregate totals only (no donor-level data)
 const { monthly, summary } = require('./reportData');
 const { today } = require('./money');
-function stats(yearIn) {
+async function stats(yearIn) {
   const cur = today().slice(0, 4);
-  const years = db.prepare("SELECT DISTINCT substr(date,1,4) y FROM transactions WHERE status='COMPLETED' ORDER BY y DESC").all().map((r) => r.y);
+  const years = (await db.prepare("SELECT DISTINCT substr(date,1,4) y FROM transactions WHERE status='COMPLETED' ORDER BY y DESC").all()).map((r) => r.y);
   if (!years.includes(cur)) years.unshift(cur);
   years.sort().reverse();
   const year = years.includes(String(yearIn)) ? String(yearIn) : cur;
-  const from = `${year}-01-01`, to = `${year}-12-31`, m = monthly(year), s = summary(from, to);
-  const income = db.prepare(`SELECT c.name, SUM(t.amount) total FROM transactions t JOIN categories c ON c.id=t.category_id
+  const from = `${year}-01-01`, to = `${year}-12-31`, [m, s] = await Promise.all([monthly(year), summary(from, to)]);
+  const income = await db.prepare(`SELECT c.name, SUM(t.amount) total FROM transactions t JOIN categories c ON c.id=t.category_id
     WHERE t.status='COMPLETED' AND t.type='CREDIT' AND t.date>=? AND t.date<=? GROUP BY c.id ORDER BY total DESC`).all(from, to);
   // who paid how much, by month (donor name only if PUBLIC, otherwise "Anonymous Donor"; never phone/notes)
   const donors = Array.from({ length: 12 }, () => []);
-  db.prepare(`SELECT t.date, t.amount, CASE WHEN t.name_visibility='PUBLIC' THEN d.name ELSE 'Anonymous Donor' END AS display_name
+  const donorRows = await db.prepare(`SELECT t.date, t.amount, CASE WHEN t.name_visibility='PUBLIC' THEN d.name ELSE 'Anonymous Donor' END AS display_name
     FROM transactions t JOIN donors d ON d.id=t.donor_id WHERE t.status='COMPLETED' AND t.type='CREDIT' AND t.date>=? AND t.date<=?
-    ORDER BY t.date DESC, t.id DESC LIMIT 5000`).all(from, to)
-    .forEach((r) => donors[Number(r.date.slice(5, 7)) - 1].push({ date: r.date, displayName: r.display_name, amount: r.amount }));
+    ORDER BY t.date DESC, t.id DESC LIMIT 5000`).all(from, to);
+  donorRows.forEach((r) => donors[Number(r.date.slice(5, 7)) - 1].push({ date: r.date, displayName: r.display_name, amount: r.amount }));
   // spending is exposed as monthly/yearly AMOUNTS only (no categories, reasons or descriptions)
   return { year, years, monthly: m, totals: { credit: s.credit, debit: s.debit, net: s.net }, income, donors };
 }

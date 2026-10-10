@@ -5,11 +5,10 @@ const PROD = process.env.NODE_ENV === 'production';
 let SECRET = process.env.SESSION_SECRET;
 if (!SECRET || SECRET.startsWith('change-me') || SECRET.length < 16) {
   if (PROD) { console.error('Set a long random SESSION_SECRET in .env before running in production.'); process.exit(1); }
-  // Development only: keep a generated secret in the database so open forms still work after the server restarts
-  const { db } = require('./db');
-  db.exec('CREATE TABLE IF NOT EXISTS app_secrets (k TEXT PRIMARY KEY, v TEXT NOT NULL)');
-  db.prepare("INSERT OR IGNORE INTO app_secrets(k,v) VALUES('csrf', ?)").run(crypto.randomBytes(32).toString('hex'));
-  SECRET = db.prepare("SELECT v FROM app_secrets WHERE k='csrf'").get().v;
+  // Development only: keep a generated secret in a small local file so open forms still work after the server restarts
+  const fs = require('fs'), FILE = '.dev-csrf-secret';
+  try { SECRET = fs.readFileSync(FILE, 'utf8').trim(); } catch { SECRET = ''; }
+  if (SECRET.length < 32) { SECRET = crypto.randomBytes(32).toString('hex'); try { fs.writeFileSync(FILE, SECRET); } catch { /* read-only disk: fall back to a per-run secret */ } }
   console.warn('Note: set a real SESSION_SECRET in .env (20+ characters) before going live.');
 }
 const sign = (v) => crypto.createHmac('sha256', SECRET).update(v).digest('hex');
